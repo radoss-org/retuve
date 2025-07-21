@@ -20,6 +20,7 @@ from retuve.draw import Overlay
 from retuve.hip_xray.classes import HipDataXray, LandmarksXRay
 from retuve.hip_xray.utils import extend_line
 from retuve.keyphrases.config import Config
+from retuve.keyphrases.enums import Colors
 from retuve.utils import angle_between_lines
 
 
@@ -96,18 +97,19 @@ def draw_ace(hip: HipDataXray, overlay: Overlay, config: Config):
         landmarks.pel_r_o, landmarks.pel_r_i, scale=1.7, direction="up"
     )
 
-    overlay.draw_lines([new_H_line, new_A_line, new_B_line])
+    overlay.draw_lines([new_H_line], color_override=Colors.PURPLE)
+    overlay.draw_lines([new_A_line, new_B_line])
 
     overlay.draw_text(
         f"ACE Index: {hip.metrics[0].value}",
         landmarks.pel_l_o[0] - 100,
-        (landmarks.pel_l_o[1] - 50),
+        (landmarks.pel_l_o[1] - 75),
     )
 
     overlay.draw_text(
         f"ACE Index: {hip.metrics[1].value}",
         landmarks.pel_r_o[0] - 100,
-        (landmarks.pel_r_o[1] - 50),
+        (landmarks.pel_r_o[1] - 75),
     )
 
     return overlay

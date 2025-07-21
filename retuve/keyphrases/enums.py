@@ -35,7 +35,10 @@ class Colors:
     DARK_RED = (139, 0, 0)
     LIGHT_BLUE = (113, 194, 245)
     PURPLE = (215, 84, 255)
+    TEAL = (0, 128, 128)
     GOLD = ImageColor.getcolor("#78620A", "RGB")
+    GOLD_LIGHT = (232, 219, 102)
+    LIGHT_GREEN = (70, 199, 158)
 
     def __init__(self, rgb=None):
         self.rgb = rgb

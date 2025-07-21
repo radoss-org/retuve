@@ -17,7 +17,7 @@ Class for creating visual overlays on images.
 """
 
 from enum import Enum
-from typing import List, Literal, Tuple
+from typing import List, Literal, Optional, Tuple
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -25,6 +25,7 @@ from radstract.data.colors import LabelColours
 
 from retuve.classes.seg import SegFrameObjects
 from retuve.keyphrases.config import Config
+from retuve.keyphrases.enums import Colors
 
 
 class DrawTypes(Enum):
@@ -49,8 +50,8 @@ class DrawTypes(Enum):
             cls.SEGS,
             cls.LINES,
             cls.CIRCLE,
-            cls.RECTANGLE,
             cls.POINTS,
+            cls.RECTANGLE,
             cls.TEXT,
         ]
 
@@ -71,7 +72,7 @@ class DrawTypes(Enum):
         elif dtype == cls.TEXT:
             return draw.text
         elif dtype == cls.POINTS:
-            return draw.point
+            return draw.line
         elif dtype == cls.CIRCLE:
             return draw.ellipse
         elif dtype == cls.RECTANGLE:
@@ -150,7 +151,7 @@ class Overlay:
 
         return seg_overlay
 
-    def draw_cross(self, point: Tuple[int, int]):
+    def draw_cross(self, point: Tuple[int, int], override_line_thickness: int = None):
         """
         Draws a cross of a given radius at a specified point on the overlay.
 
@@ -162,16 +163,16 @@ class Overlay:
         color = self.config.visuals.points_color.rgba()
 
         self.add_operation(
-            DrawTypes.LINES,
+            DrawTypes.POINTS,
             (x - radius, y, x + radius, y),
             fill=color,
-            width=self.config.visuals.line_thickness,
+            width=override_line_thickness or self.config.visuals.line_thickness,
         )
         self.add_operation(
-            DrawTypes.LINES,
+            DrawTypes.POINTS,
             (x, y - radius, x, y + radius),
             fill=color,
-            width=self.config.visuals.line_thickness,
+            width=override_line_thickness or self.config.visuals.line_thickness,
         )
 
     def draw_segmentation(self, points: List[Tuple[int, int]]):
@@ -228,7 +229,11 @@ class Overlay:
                 fill=self.config.hip.midline_color.rgba(),
             )
 
-    def draw_lines(self, line_points: List[Tuple[Tuple[int, int], Tuple[int, int]]]):
+    def draw_lines(
+        self,
+        line_points: List[Tuple[Tuple[int, int], Tuple[int, int]]],
+        color_override: Optional[Colors] = None,
+    ):
         """
         Draws lines on the overlay.
 
@@ -236,11 +241,16 @@ class Overlay:
 
         """
 
+        if color_override:
+            color = color_override
+        else:
+            color = self.config.visuals.line_color.rgba()
+
         for point1, point2 in line_points:
             self.add_operation(
                 DrawTypes.LINES,
                 (tuple(point1), tuple(point2)),
-                fill=self.config.visuals.line_color.rgba(),
+                fill=color,
                 width=self.config.visuals.line_thickness,
             )
 

@@ -20,6 +20,7 @@ from retuve.draw import Overlay
 from retuve.hip_xray.classes import HipDataXray, LandmarksXRay
 from retuve.hip_xray.utils import extend_line
 from retuve.keyphrases.config import Config
+from retuve.keyphrases.enums import Colors
 from retuve.utils import angle_between_lines, find_perpendicular_point
 
 
@@ -113,19 +114,26 @@ def draw_wiberg(hip: HipDataXray, overlay: Overlay, config: Config):
         new_P_line_left = extend_line(
             landmarks.pel_l_o,
             P_line_intercept_left,
-            scale=1.6,
+            scale=3,
             direction="both",
         )
         new_wiberg_line_left = extend_line(
-            landmarks.pel_l_o, landmarks.h_point_l, scale=3, direction="down"
+            landmarks.pel_l_o, landmarks.h_point_l, scale=2, direction="down"
         )
 
         overlay.draw_lines(
             [
                 new_P_line_left,
-                new_wiberg_line_left,
-            ]
+            ],
+            color_override=Colors.RED,
         )
+        overlay.draw_lines(
+            [
+                new_wiberg_line_left,
+            ],
+            color_override=Colors.GOLD_LIGHT,
+        )
+
         overlay.draw_text(
             f"Wiberg: {hip.metrics[2].value}",
             landmarks.pel_l_o[0] - 100,
@@ -139,18 +147,24 @@ def draw_wiberg(hip: HipDataXray, overlay: Overlay, config: Config):
         new_P_line_right = extend_line(
             P_line_intercept_right,
             landmarks.pel_r_o,
-            scale=1.6,
+            scale=3,
             direction="both",
         )
         new_wiberg_line_right = extend_line(
-            landmarks.pel_r_o, landmarks.h_point_r, scale=3, direction="down"
+            landmarks.pel_r_o, landmarks.h_point_r, scale=2, direction="down"
         )
 
         overlay.draw_lines(
             [
                 new_P_line_right,
+            ],
+            color_override=Colors.RED,
+        )
+        overlay.draw_lines(
+            [
                 new_wiberg_line_right,
-            ]
+            ],
+            color_override=Colors.GOLD_LIGHT,
         )
         overlay.draw_text(
             f"Wiberg: {hip.metrics[3].value}",

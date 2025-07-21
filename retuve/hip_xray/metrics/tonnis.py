@@ -16,10 +16,13 @@
 Metric: Tonnis Classification of DDH
 """
 
+import numpy as np
+
 from retuve.draw import Overlay
 from retuve.hip_xray.classes import HipDataXray, LandmarksXRay
 from retuve.hip_xray.utils import extend_line
 from retuve.keyphrases.config import Config
+from retuve.keyphrases.enums import Colors
 from retuve.utils import (
     find_perpendicular_point,
     point_above_below,
@@ -113,12 +116,16 @@ def _draw_tonnis_side(overlay, pel_o, h_line_p1, h_line_p2, grade_text):
     """Draws the SMA line and grade text for one side."""
     # Define SMA line (parallel to H-line, passing through pel_o) for drawing
     h_line_vec = (h_line_p2[0] - h_line_p1[0], h_line_p2[1] - h_line_p1[1])
+    h_line_norm = np.linalg.norm(h_line_vec) * 0.015
+    h_line_vec = (h_line_vec[0] / h_line_norm, h_line_vec[1] / h_line_norm)
     sma_line_p2 = (pel_o[0] + h_line_vec[0], pel_o[1] + h_line_vec[1])
+    pel_o_original = pel_o
+    pel_o = (pel_o[0] - h_line_vec[0], pel_o[1] - h_line_vec[1])
 
     sma_line_to_draw = extend_line(pel_o, sma_line_p2, scale=1.3, direction="both")
 
-    overlay.draw_lines([sma_line_to_draw])
-    overlay.draw_text(grade_text, pel_o[0] - 100, pel_o[1] - 150)
+    overlay.draw_lines([sma_line_to_draw], color_override=Colors.LIGHT_GREEN)
+    overlay.draw_text(grade_text, pel_o_original[0] - 100, pel_o_original[1] - 125)
 
 
 def draw_tonnis(hip: HipDataXray, overlay: Overlay, config: Config):

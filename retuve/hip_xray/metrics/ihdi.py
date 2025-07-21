@@ -22,6 +22,7 @@ from retuve.draw import Overlay
 from retuve.hip_xray.classes import HipDataXray, LandmarksXRay
 from retuve.hip_xray.utils import extend_line
 from retuve.keyphrases.config import Config
+from retuve.keyphrases.enums import Colors
 from retuve.utils import (
     find_perpendicular_point,
     point_above_below,
@@ -136,8 +137,8 @@ def find_ihdi(landmarks: LandmarksXRay) -> tuple[int, int]:
 
 def _draw_side(overlay: Overlay, d_line, grade_text, text_pos):
     """Draws the D-line and grade text for one side."""
-    new_d_line = extend_line(d_line[0], d_line[1], scale=1.6, direction="down")
-    overlay.draw_lines([new_d_line])
+    new_d_line = extend_line(d_line[0], d_line[1], scale=2.5, direction="down")
+    overlay.draw_lines([new_d_line], color_override=Colors.WHITE)
     overlay.draw_text(grade_text, text_pos[0] - 100, text_pos[1] - 100)
 
 

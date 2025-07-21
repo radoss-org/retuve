@@ -61,7 +61,7 @@ def draw_hips_xray(
 
         # overlay = draw_seg(final_seg_frame_objs, overlay, config)
 
-        overlay = draw_landmarks(final_hip, overlay)
+        overlay = draw_landmarks(final_hip, overlay, override_line_thickness=6)
 
         overlay = draw_ace(final_hip, overlay, config)
         overlay = draw_wiberg(final_hip, overlay, config)

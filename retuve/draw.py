@@ -32,12 +32,17 @@ from retuve.keyphrases.config import Config
 TARGET_SIZE = (700, 700)
 
 
-def draw_landmarks(hip: Union[HipDataUS, HipDataXray], overlay: Overlay) -> Overlay:
+def draw_landmarks(
+    hip: Union[HipDataUS, HipDataXray],
+    overlay: Overlay,
+    override_line_thickness: int = None,
+) -> Overlay:
     """
     Draw the landmarks on the overlay.
 
     :param hip: The hip data.
     :param overlay: The overlay to draw on.
+    :param override_line_thickness: The line thickness to use for the landmarks.
 
     :return: The overlay with the landmarks drawn.
     """
@@ -48,7 +53,7 @@ def draw_landmarks(hip: Union[HipDataUS, HipDataXray], overlay: Overlay) -> Over
         if landmark is None:
             continue
 
-        overlay.draw_cross(landmark)
+        overlay.draw_cross(landmark, override_line_thickness=override_line_thickness)
 
     return overlay
 

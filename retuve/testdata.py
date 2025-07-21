@@ -22,7 +22,7 @@ from enum import Enum
 
 from radstract.testdata import download_case as download_case_radstract
 
-URL = "https://raw.githubusercontent.com/radoss-org/radoss-creative-commons/main"
+URL = "https://github.com/radoss-org/radoss-creative-commons/raw/185aed296005617d13bc959b9e2853749c524586"
 
 
 def download_case(*args, disable_warning=False, **kwargs):
