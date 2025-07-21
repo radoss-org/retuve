@@ -37,7 +37,7 @@ def test_add_operation(overlay):
 
 def test_draw_cross(overlay):
     overlay.draw_cross((50, 50))
-    assert len(overlay.operations[DrawTypes.LINES]) == 2
+    assert len(overlay.operations[DrawTypes.POINTS]) == 2
 
 
 def test_draw_segmentation(overlay):
