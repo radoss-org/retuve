@@ -72,7 +72,10 @@ async def store_feedback(
         }
     except Exception as e:
         ulogger.info(e)
-        return {"status": "error", "message": str(e)}
+        return {
+            "status": "error",
+            "message": "An internal error has occurred.",
+        }
 
 
 @router.get("/api/get_feedback/{keyphrase}")
@@ -112,7 +115,9 @@ async def get_metrics(file_id: str, keyphrase: str, request: Request):
 
     config = Config.get_config(keyphrase)
     base_dir = config.api.savedir
-    metrics_file = os.path.normpath(os.path.join(base_dir, file_id, "metrics.json"))
+    metrics_file = os.path.normpath(
+        os.path.join(base_dir, file_id, "metrics.json")
+    )
     if not metrics_file.startswith(os.path.abspath(base_dir)):
         return {"status": "error", "message": "Invalid file_id."}
     if os.path.exists(metrics_file):
@@ -124,7 +129,9 @@ async def get_metrics(file_id: str, keyphrase: str, request: Request):
 
 
 @router.post("/api/upload/{keyphrase}")
-async def handle_upload(request: Request, keyphrase: str, file: UploadFile = File(...)):
+async def handle_upload(
+    request: Request, keyphrase: str, file: UploadFile = File(...)
+):
     """
     Handle file uploads.
 
@@ -173,7 +180,9 @@ async def handle_upload(request: Request, keyphrase: str, file: UploadFile = Fil
                 )
 
                 dicom_id = _file.split(".")[0]
-                await dicom_processing_queue.put((dicom_id, None, config, live_savedir))
+                await dicom_processing_queue.put(
+                    (dicom_id, None, config, live_savedir)
+                )
 
         # delete the temp folder
         shutil.rmtree(temp_dir)
