@@ -72,7 +72,7 @@ async def store_feedback(
         }
     except Exception as e:
         ulogger.info(e)
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": "An internal error has occurred."}
 
 
 @router.get("/api/get_feedback/{keyphrase}")
