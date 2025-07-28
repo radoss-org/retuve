@@ -34,9 +34,7 @@ from retuve.keyphrases.config import Config
 from retuve.trak.data import extract_files
 
 
-def basic_auth_dependency(
-    authorization: str = Header(None), response: Response = None
-):
+def basic_auth_dependency(authorization: str = Header(None), response: Response = None):
     if not authorization or not authorization.startswith("Basic "):
         raise HTTPException(
             status_code=401,
@@ -146,9 +144,7 @@ async def web_keyphrase(request: Request, keyphrase: str):
     try:
         config = Config.get_config(keyphrase)
     except ValueError:
-        raise HTTPException(
-            status_code=404, detail=f"Keyphrase {keyphrase} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Keyphrase {keyphrase} not found")
     files_data = extract_files(config.api.db_path)
 
     auth_token = request.cookies.get("auth_token")
@@ -187,9 +183,7 @@ async def upload_form(request: Request):
 
 
 @router.get("/ui/download/{keyphrase}")
-async def download_files(
-    request: Request, keyphrase: str, pattern: str = None
-):
+async def download_files(request: Request, keyphrase: str, pattern: str = None):
     """
     Download files from the Retuve Web Interface.
     """
