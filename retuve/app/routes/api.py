@@ -111,7 +111,10 @@ async def get_metrics(file_id: str, keyphrase: str, request: Request):
     validate_api_token(api_token)
 
     config = Config.get_config(keyphrase)
-    metrics_file = f"{config.api.savedir}/{file_id}/metrics.json"
+    base_dir = config.api.savedir
+    metrics_file = os.path.normpath(os.path.join(base_dir, file_id, "metrics.json"))
+    if not metrics_file.startswith(os.path.abspath(base_dir)):
+        return {"status": "error", "message": "Invalid file_id."}
     if os.path.exists(metrics_file):
         with open(metrics_file, "r") as file:
             metrics_list = json.load(file)
