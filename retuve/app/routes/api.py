@@ -54,8 +54,11 @@ async def store_feedback(
     file_id = feedback_request.file_id
     feedback = feedback_request.feedback
 
-    feedback_dir = f"{config.api.savedir}/{file_id}"
-    feedback_file = f"{feedback_dir}/feedback.json"
+    feedback_dir = os.path.join(config.api.savedir, file_id)
+    feedback_dir = os.path.normpath(feedback_dir)
+    if not feedback_dir.startswith(config.api.savedir):
+        raise Exception("Invalid file_id: Path traversal detected.")
+    feedback_file = os.path.join(feedback_dir, "feedback.json")
     os.makedirs(feedback_dir, exist_ok=True)
     try:
         if os.path.exists(feedback_file):
@@ -93,7 +96,11 @@ async def get_feedback(file_id: str, keyphrase: str, request: Request):
     validate_api_token(api_token)
 
     config = Config.get_config(keyphrase)
-    feedback_file = f"{config.api.savedir}/{file_id}/feedback.json"
+    feedback_dir = os.path.join(config.api.savedir, file_id)
+    feedback_dir = os.path.normpath(feedback_dir)
+    if not feedback_dir.startswith(config.api.savedir):
+        raise Exception("Invalid file_id: Path traversal detected.")
+    feedback_file = os.path.join(feedback_dir, "feedback.json")
     if os.path.exists(feedback_file):
         with open(feedback_file, "r") as file:
             feedback_list = json.load(file)
