@@ -9,11 +9,11 @@ As of 2025-06-01, Retuve does not include default AI plugins. You will need to i
 **Note:**
 All plugins are under their own licenses. Please check the license of each plugin before using it.
 
-- [retuve-tinyunet-plugin](https://github.com/radoss-org/retuve-tinyunet-plugin)
-- [retuve-nnunet-plugin](https://github.com/radoss-org/retuve-nnunet-plugin)
 - [retuve-yolo-plugin](https://github.com/radoss-org/retuve-yolo-plugin)
 
-For this guide, we will use the `retuve-yolo-plugin`.
+For this guide, we will use the `retuve-yolo-plugin`, which has the version 2 x-ray system.
+
+**We highly recommend reading how version 2 was trained and validated here: https://github.com/radoss-org/retuve-yolo-plugin?tab=readme-ov-file#update---x-ray-version-2**
 
 Install it with:
 
@@ -28,7 +28,7 @@ You only need to make a few changes to the [example script](https://github.com/r
 ### 1. Import the X-Ray Plugin and pydicom
 
 ```python
-from retuve_yolo_plugin.xray import yolo_predict_dcm_xray
+from retuve_yolo_plugin.xray_v2 import yolo_predict_dcm_xray
 import pydicom
 ```
 
@@ -70,7 +70,7 @@ Here is a complete example script for analyzing a single DICOM file:
 
 ```python
 import pydicom
-from retuve_yolo_plugin.xray import yolo_predict_dcm_xray
+from retuve_yolo_plugin.xray_v2 import yolo_predict_dcm_xray
 from retuve.defaults.hip_configs import default_xray
 from retuve.funcs import analyse_hip_xray_2D
 
@@ -96,7 +96,7 @@ To process multiple DICOM files, use a loop:
 ```python
 import os
 import pydicom
-from retuve_yolo_plugin.xray import yolo_predict_dcm_xray
+from retuve_yolo_plugin.xray_v2 import yolo_predict_dcm_xray
 from retuve.defaults.hip_configs import default_xray
 from retuve.funcs import analyse_hip_xray_2D
 
