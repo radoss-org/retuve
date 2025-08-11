@@ -92,6 +92,7 @@ hip = HipConfig(
     graf_algo_threshold=None,
     graf_frame_selection=None,
     allow_irregular_illiums=False,
+    allow_horizontal_flipping=False,
 )
 
 trak = TrakConfig(

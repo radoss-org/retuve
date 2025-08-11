@@ -130,7 +130,7 @@ def segs_2_landmarks_us(
         hip_objs_list.append(hip_objs)
         all_rejection_reasons.append(rejection_reasons)
 
-    if fem_head_ilium_wrong_way_round > 5:
+    if fem_head_ilium_wrong_way_round > 5 and config.hip.allow_horizontal_flipping:
         # Flip images
         for seg_frame_objs in results:
             seg_frame_objs.img = cv2.flip(seg_frame_objs.img, 1)

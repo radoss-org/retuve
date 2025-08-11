@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Literal, Union
 
 from PIL import ImageFont
 from pyparsing import C
+
 from retuve.keyphrases.enums import (
     ACASplit,
     Colors,
@@ -62,6 +63,7 @@ class HipConfig:
         graf_algo_threshold: float,
         graf_frame_selection: int,
         allow_irregular_illiums: bool,
+        allow_horizontal_flipping: bool,
     ):
         """
         The Hip Subconfig.
@@ -111,6 +113,7 @@ class HipConfig:
         self.graf_algo_threshold = graf_algo_threshold
         self.graf_frame_selection = graf_frame_selection
         self.allow_irregular_illiums = allow_irregular_illiums
+        self.allow_horizontal_flipping = allow_horizontal_flipping
 
 
 class TrakConfig:
