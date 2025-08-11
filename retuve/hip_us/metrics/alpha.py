@@ -41,6 +41,9 @@ def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Conf
     # Get endpoints of main midline
     left_most, right_most = find_midline_extremes(illium.midline_moved)
 
+    if left_most is None or right_most is None:
+        return landmarks
+
     # Convert to NumPy arrays once
     left_most = np.array(left_most, dtype=float)
     right_most = np.array(right_most, dtype=float)
@@ -80,7 +83,13 @@ def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Conf
         else:
             p2 = (a, m_orth * (a - px) + py)
 
-        closest_point = smart_find_intersection(left_tuple, right_tuple, (px, py), p2)
+        try:
+            closest_point = smart_find_intersection(
+                left_tuple, right_tuple, (px, py), p2
+            )
+
+        except ValueError:
+            closest_point = None
 
         if closest_point is not None:
             min_dist = np.hypot(closest_point[0] - px, closest_point[1] - py)
