@@ -56,7 +56,17 @@ jobs:
     - name: Get all test plugins/data
       run: |
         poetry run poe testgetplugins
-        poetry run poe testgen
+
+    - name: Generate test data and check for no changes
+      run: |
+        output=$(poetry run poe testgen 2>&1)
+        echo "$output"
+        if ! echo "$output" | grep -q "No changes detected; no new release note created."; then
+          echo "ERROR: Changes were detected in test data generation. This suggests code changes may have affected output."
+          echo "Please review the changes and ensure they are intentional."
+          exit 1
+        fi
+        echo "SUCCESS: No changes detected in test data generation."
 
     - name: Run tests
       run: |

@@ -40,6 +40,7 @@ class DrawTypes(Enum):
     POINTS = "points"
     CIRCLE = "circle"
     RECTANGLE = "rectangle"
+    SKEL = "skel"
 
     @classmethod
     def ALL(cls) -> List["DrawTypes"]:
@@ -53,6 +54,7 @@ class DrawTypes(Enum):
             cls.POINTS,
             cls.RECTANGLE,
             cls.TEXT,
+            cls.SKEL,
         ]
 
     @classmethod
@@ -73,6 +75,8 @@ class DrawTypes(Enum):
             return draw.text
         elif dtype == cls.POINTS:
             return draw.line
+        elif dtype == cls.SKEL:
+            return draw.point
         elif dtype == cls.CIRCLE:
             return draw.ellipse
         elif dtype == cls.RECTANGLE:
@@ -224,7 +228,7 @@ class Overlay:
         for point in skel:
             y, x = point
             self.add_operation(
-                DrawTypes.POINTS,
+                DrawTypes.SKEL,
                 (x, y),
                 fill=self.config.hip.midline_color.rgba(),
             )

@@ -17,7 +17,11 @@ Metric: Alpha Angle
 
 """
 
+from typing import List, Tuple
+
 import numpy as np
+from PIL import Image, ImageDraw
+from radstract.math import smart_find_intersection
 
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegObject
@@ -30,105 +34,72 @@ from retuve.utils import find_midline_extremes, warning_decorator
 APEX_RIGHT_FACTOR = 0
 
 
-def find_alpha_landmarks(
-    illium: SegObject, landmarks: LandmarksUS, config: Config
-) -> LandmarksUS:
-    """
-    Algorithm to find the landmarks for the Alpha Angle.
-
-    :param illium: SegObject: The Illium SegObject.
-    :param landmarks: LandmarksUS: The landmarks object.
-    :param config: Config: The Config
-
-    :return: LandmarksUS: The updated landmarks object.
-    """
-    if not (
-        illium
-        and any(m in config.hip.measurements for m in MetricUS.ALL())
-        and illium.mask is not None
-    ):
+def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Config):
+    if illium is None or illium.midline_moved is None:
         return landmarks
 
+    # Get endpoints of main midline
     left_most, right_most = find_midline_extremes(illium.midline_moved)
 
-    if right_most is None or left_most is None or (right_most[1] - left_most[1]) == 0:
-        return landmarks
+    # Convert to NumPy arrays once
+    left_most = np.array(left_most, dtype=float)
+    right_most = np.array(right_most, dtype=float)
+    midline_moved = np.array(illium.midline_moved, dtype=float)
 
-    # get the equation for the line between the two extreme points
-    # y = mx + b
-    m = (right_most[0] - left_most[0]) / (right_most[1] - left_most[1])
-    b = left_most[0] - m * left_most[1]
+    # Precompute slope of main line
+    dx = right_most[1] - left_most[1]
+    dy = right_most[0] - left_most[0]
+    if dx == 0:
+        m = None  # vertical
+    else:
+        m = dy / dx
 
-    # if m is 0, return landmarks
-    if m == 0:
-        return landmarks
+    # Orthogonal slope
+    if m is None:
+        m_orth = 0
+    elif m == 0:
+        m_orth = None
+    else:
+        m_orth = -1 / m
 
-    # find the height
+    # Sample every 5th point
+    sampled_points = midline_moved[::5]
 
-    # find the orthogonal line to the line between the two extreme points
-    # y = -1/m * x + b
-    m_orth = -1 / m
-    # for each point along the line, find the distance between that point and the
+    results = []
+    append_result = results.append  # local binding for speed
 
-    points_on_line = np.array(
-        [[x, m * x + b] for x in range(int(left_most[1]), int(right_most[1]), 1)]
-    )
+    # Precompute left/right tuple for intersection calls
+    left_tuple = (left_most[1], left_most[0])
+    right_tuple = (right_most[1], right_most[0])
 
-    # Convert white_points to a convenient shape for vector operations
-    midline_moved = np.array(illium.midline_moved)[
-        :, ::-1
-    ]  # Reverse each point only once
-
-    # Create an array for b_orth values for each point in points_on_line
-    b_orth_array = points_on_line[:, 1] - m_orth * points_on_line[:, 0]
-
-    # Calculate y_values on the orthogonal line for each point in points_on_line
-    y_values_orth_line = m_orth * midline_moved[:, 0] + b_orth_array[:, np.newaxis]
-
-    # Check which white points are close to each orthogonal line
-    close_points = np.isclose(y_values_orth_line, midline_moved[:, 1], atol=0.8)
-
-    # Calculate distances for all point pairs
-    distances = np.linalg.norm(points_on_line[:, np.newaxis, :] - midline_moved, axis=2)
-
-    # Mask distances with close_points to consider only relevant distances
-    masked_distances = np.where(close_points, distances, 0)
-
-    # Find the maximum distance and the corresponding points
-    max_distance = np.max(masked_distances)
-    max_distance = np.max(masked_distances)
-    if max_distance > 0:
-        point_index, apex_point_index = np.unravel_index(
-            np.argmax(masked_distances), masked_distances.shape
-        )
-        best_point = tuple(points_on_line[point_index])
-        # Check APEX_RIGHT_FACTOR is within bounds
-        if apex_point_index + APEX_RIGHT_FACTOR < len(midline_moved):
-            factor = APEX_RIGHT_FACTOR
+    for py, px in sampled_points:
+        a = px - 100
+        if m_orth is None:
+            # vertical orthogonal line
+            p2 = (px, py + 100)
         else:
-            # max possible factor
-            factor = len(midline_moved) - apex_point_index - 1
+            p2 = (a, m_orth * (a - px) + py)
 
-        best_apex_point = tuple(midline_moved[apex_point_index + factor])
+        closest_point = smart_find_intersection(left_tuple, right_tuple, (px, py), p2)
 
-        left_most, right_most = find_midline_extremes(illium.midline_moved)
-        if right_most is None or left_most is None:
-            return landmarks
+        if closest_point is not None:
+            min_dist = np.hypot(closest_point[0] - px, closest_point[1] - py)
+            append_result((min_dist, (py, px), (closest_point[1], closest_point[0])))
 
-        left_most, right_most = tuple(reversed(left_most)), tuple(reversed(right_most))
-        mid_x = (left_most[0] + right_most[0]) / 2
-        if (
-            (best_apex_point[1] < best_point[1])  # apex above line
-            and right_most[0] > best_apex_point[0]  # apex left of right point
-            and best_apex_point[0] > mid_x  # mid_x left of apex
-        ):
-            # re-calculate the left and right points from original midline
+    if not results:
+        return landmarks
 
-            landmarks.left = left_most
-            landmarks.right = right_most
-            landmarks.apex = best_apex_point
+    # Convert to NumPy for fast argmax
+    results_arr = np.array(results, dtype=object)
+    # Find max distance, break ties by furthest right
+    max_idx = max(range(len(results)), key=lambda i: (results[i][0], results[i][1][1]))
 
-    # reversed because cv2 uses (y, x)??
+    max_distance, main_point, closest_point = results[max_idx]
+
+    landmarks.apex = (main_point[1], main_point[0])
+    landmarks.left = (left_most[1], left_most[0])
+    landmarks.right = (right_most[1], right_most[0])
+
     return landmarks
 
 

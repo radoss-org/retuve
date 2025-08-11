@@ -55,7 +55,7 @@ def test_draw_box(overlay):
 def test_draw_skeleton(overlay):
     skeleton_points = [(10, 10), (20, 20), (30, 30)]
     overlay.draw_skeleton(skeleton_points)
-    assert len(overlay.operations[DrawTypes.POINTS]) == len(skeleton_points)
+    assert len(overlay.operations[DrawTypes.SKEL]) == len(skeleton_points)
 
 
 def test_draw_lines(overlay):
