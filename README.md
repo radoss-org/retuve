@@ -24,7 +24,7 @@ Attribution of the above X-Ray Images: Fraiwan, Mohammad; Al-Kofahi, Noran; Hana
 
 # Docs
 
-See our docs online at [https://retuve.nidusai.ca](https://retuve.nidusai.ca)
+See our docs online at [https://radoss-org.github.io/retuve/retuve.html](https://radoss-org.github.io/retuve/retuve.html)
 
 # License
 
