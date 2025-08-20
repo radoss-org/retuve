@@ -47,7 +47,7 @@ jobs:
         run: poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
       - name: Build docs with pdoc
-        run: poetry run pdoc -d numpy -o web retuve --logo https://files.mcaq.me/52kj1.png
+        run: poetry run pdoc -d numpy -o docs retuve --logo https://files.mcaq.me/52kj1.png
 
       - name: Build package
         run: poetry build
