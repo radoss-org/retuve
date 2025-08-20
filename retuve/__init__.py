@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from importlib.metadata import version
-
 """
-# The first fully Open Source Infant Hip Analysis Package
+# The first Open, Collaborative Framework for Infant Hip Health using AI
+
 
 Retuve (from the scottish gaelic `Ri taobh` meaning `beside`) is a framework for analysing infant hips. It is designed to be a flexible and extensible framework that can be used by developers, AI researchers and clinicians.
 
-It takes in raw Hip Ultrasound and X-Ray images, and outputs a report with the labelled images, and the results, exactly as a clinician would.
+It takes in raw hip Ultrasound and X-Ray images, and outputs a report with the labelled images, and the results, exactly as a clinician would.
 
 <img src="https://raw.githubusercontent.com/radoss-org/radoss-creative-commons/main/other/224_ddh_115_%26_172535_0_diagram.jpg" alt="drawing" width="500"/>
 
@@ -27,7 +26,17 @@ Attribution of the above Ultrasound Images: Case courtesy of Ryan Thibodeau from
 
 Attribution of the above X-Ray Images: Fraiwan, Mohammad; Al-Kofahi, Noran; Hanatleh, Omar; ibnian, ali (2022), “A dataset of DDH x-ray images”, Mendeley Data, V2, doi: 10.17632/jf3pv98m9g.2
 
+# Docs
+
+See our docs online at [https://radoss-org.github.io/retuve/retuve.html](https://radoss-org.github.io/retuve/retuve.html)
+
+# License
+
+Retuve is licensed under the Apache 2.0 License. This means that you can use it for commercial purposes, and modify it as you see fit. The only requirement is that you must provide the license with any distribution of the software.
+
 # Quickstart
+
+**Please Note that the 2D Sweep and 3D DICOMs are sythetically stitched together from 2D Graf Hips, so do not expect accurate results. We are working on getting a 3DUS Case on a Creative Commons License to have as an example.**
 
 To get started with Retuve, you can install it via pip:
 
@@ -37,13 +46,16 @@ pip install git+https://github.com/radoss-org/retuve.git
 
 You can then run the following code to get a basic report:
 
+**WARNING: Before running this script, please make sure you have read the data disclaimer at `DATA_DISCLAIMER.md`.**
+
+
 ```python
 import pydicom
 from radstract.data.dicom import convert_dicom_to_images
 from retuve.defaults.hip_configs import default_US
 from retuve.defaults.manual_seg import manual_predict_us
-from retuve.funcs import analyse_hip_2DUS
 from retuve.testdata import Cases, download_case
+from retuve.funcs import analyse_hip_2DUS
 
 # Example usage
 dcm_file, seg_file = download_case(Cases.ULTRASOUND_DICOM)
@@ -63,20 +75,23 @@ img.save("2dus.png")
 <img src="https://raw.githubusercontent.com/radoss-org/radoss-creative-commons/main/other/ultrasound/172535_0_processed.png" alt="drawing" width="500"/>
 
 Attribution of the above Ultrasound Images: Case courtesy of Ryan Thibodeau from https://radiopaedia.org 172535 (https://radiopaedia.org/cases/172535)
+
 # Features
 
 - pip installable (easy to intergrate with you existing systems)
 - Apache 2.0 Licensed
 - AI is fully pluggable/modular
-- Basic Web Interface bundled
+- Basic Web Interface bundled (through Retuve Trak)
 - CLI Interface
-- Swagger API Provided
+- Swagger API Provided (through Retuve Trak)
 
 # Examples
 
 Examples can be found at https://github.com/radoss-org/retuve/tree/main/examples
 
 # Docs
+
+We have separate documentation for different use cases. Please see them all here: `retuve.docs.usecases`
 
 We provide high level overviews for different types of users. This includes a tailored description of Retuve, and some highlighted features:
 
@@ -88,8 +103,9 @@ We provide high level overviews for different types of users. This includes a ta
 
 Retuve can analyse Hips for:
 
-- Ultrasound: `retuve.hip_us`
-- X-Ray: `retuve.hip_xray`
+- Ultrasound: `retuve.docs.modalities.ultrasound`
+- X-Ray: `retuve.docs.modalities.xray`
+
 
 # Developer Guide
 
@@ -100,6 +116,8 @@ git clone https://github.com/radoss-org/retuve.git
 ```
 
 You can then install retuve with poetry, and then run the tests:
+
+**NOTE: These tests are about testing consistency between changes, and not directly testing the accuracy of the AI. See `changenotes` for tracking.**
 
 ```bash
 # Needed for the scripts
@@ -117,13 +135,14 @@ poe test_all
 # Get info on all other dev scripts
 poe help
 ```
-
 """
+
+from importlib.metadata import version
 
 __version__ = version("retuve")
 
 
-def print_disclaimer():
+def _print_disclaimer():
     message = """
 **Disclaimer:**
 
@@ -146,4 +165,4 @@ or diagnosis.
     print(message)
 
 
-print_disclaimer()
+_print_disclaimer()
