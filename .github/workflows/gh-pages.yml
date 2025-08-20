@@ -44,7 +44,7 @@ jobs:
         run: poetry install --no-interaction --no-ansi
 
       - name: Build docs with pdoc
-        run: poetry run pdoc -d numpy -o docs retuve
+        run: poetry run pdoc -d numpy -o web retuve --logo https://files.mcaq.me/52kj1.png
 
       - name: Build package
         run: poetry build
@@ -64,4 +64,8 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
+<<<<<<< HEAD
         uses: actions/deploy-pages@v4
+=======
+        uses: actions/deploy-pages@v4
+>>>>>>> c09d9f45de9366032ee157e8564cd234770ec278
