@@ -64,8 +64,4 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-<<<<<<< HEAD
         uses: actions/deploy-pages@v4
-=======
-        uses: actions/deploy-pages@v4
->>>>>>> c09d9f45de9366032ee157e8564cd234770ec278
