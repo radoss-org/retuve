@@ -1,4 +1,5 @@
 ![Retuve](https://files.mcaq.me/52kj1.png)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fradoss-org%2Fretuve.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fradoss-org%2Fretuve?ref=badge_shield)
 
 ![tests](https://github.com/radoss-org/retuve/actions/workflows/test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/radoss-org/retuve/graph/badge.svg?token=IMVHNUTUDY)](https://codecov.io/gh/radoss-org/retuve)
@@ -29,6 +30,9 @@ See our docs online at [https://radoss-org.github.io/retuve/retuve.html](https:/
 # License
 
 Retuve is licensed under the Apache 2.0 License. This means that you can use it for commercial purposes, and modify it as you see fit. The only requirement is that you must provide the license with any distribution of the software.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fradoss-org%2Fretuve.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fradoss-org%2Fretuve?ref=badge_large)
 
 # Quickstart
 
