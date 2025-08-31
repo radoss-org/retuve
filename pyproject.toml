@@ -10,7 +10,7 @@ python = ">=3.10,<3.13"
 radstract = { git = "https://github.com/radoss-org/radstract.git" }
 fire = "^0.7.0"
 moviepy = "^2.2.1"
-plotly = "^5.18.0"
+plotly = "^6.1.1"
 opencv-contrib-python = "^4.8.1.78"
 open3d = "^0.19.0"
 addict = "^2.4.0"
