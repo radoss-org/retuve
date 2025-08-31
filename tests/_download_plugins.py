@@ -118,7 +118,13 @@ for owner, repo, branch, directory, output_dir in to_download:
     # Install the package using pip
     print("Installing the package from the repository...")
     subprocess.run(
-        ["pip", "install", f"git+https://github.com/{owner}/{repo}.git"],
+        [
+            "pip",
+            "install",
+            f"git+https://github.com/{owner}/{repo}.git",
+            "--no-deps",
+            "retuve",
+        ],
         check=True,
     )
 
