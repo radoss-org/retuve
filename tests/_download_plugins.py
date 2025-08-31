@@ -119,6 +119,8 @@ for owner, repo, branch, directory, output_dir in to_download:
     print("Installing the package from the repository...")
     subprocess.run(
         [
+            "poetry",
+            "run",
             "pip",
             "install",
             f"git+https://github.com/{owner}/{repo}.git",
