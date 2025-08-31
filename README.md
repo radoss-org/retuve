@@ -3,6 +3,7 @@
 ![tests](https://github.com/radoss-org/retuve/actions/workflows/test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/radoss-org/retuve/graph/badge.svg?token=IMVHNUTUDY)](https://codecov.io/gh/radoss-org/retuve)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fradoss-org%2Fretuve.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fradoss-org%2Fretuve?ref=badge_shield)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fradoss-org%2Fretuve.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2Fradoss-org%2Fretuve?ref=badge_shield&issueType=security)
 
 # Retuve - The first Open, Collaborative Framework for Infant Hip Health using AI
 
