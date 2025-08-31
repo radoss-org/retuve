@@ -126,6 +126,7 @@ for owner, repo, branch, directory, output_dir in to_download:
             f"git+https://github.com/{owner}/{repo}.git",
             "--no-deps",
             "retuve",
+            "--force-reinstall",
         ],
         check=True,
     )
