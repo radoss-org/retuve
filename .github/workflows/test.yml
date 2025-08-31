@@ -59,8 +59,10 @@ jobs:
 
     - name: Generate test data and check for no changes
       run: |
-        # Use tee to output to console and capture in variable simultaneously
-        output=$(poetry run poe testgen 2>&1 | tee /dev/tty)
+        # Use a temporary file to capture output while also displaying it
+        poetry run poe testgen 2>&1 | tee temp_output.txt
+        output=$(cat temp_output.txt)
+        rm temp_output.txt
         if ! echo "$output" | grep -q "No changes detected; no new release note created."; then
           echo "ERROR: Changes were detected in test data generation. This suggests code changes may have affected output."
           echo "Please review the changes and ensure they are intentional."
