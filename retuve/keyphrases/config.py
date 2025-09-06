@@ -21,7 +21,6 @@ from typing import List, Tuple
 
 from PIL import ImageFont
 from radstract.data.dicom import DicomTypes
-from torch.types import Device
 
 from retuve.keyphrases.enums import OperationType
 from retuve.keyphrases.subconfig import (
@@ -53,7 +52,7 @@ class Config:
         crop_coordinates: Tuple[float],
         template: bool,
         min_seg_confidence: float,
-        device: Device,
+        device: "torch.Device",
         operation_type: OperationType,
         dev: bool,
         replace_old: bool,

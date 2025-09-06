@@ -42,6 +42,15 @@ To get started with Retuve, you can install it via pip:
 pip install git+https://github.com/radoss-org/retuve.git
 ```
 
+If you have docker, you can quick-run with:
+
+```bash
+sudo docker run -i --rm \
+  -v "${PWD}":/app/\
+  -w /app \
+  ghcr.io/radoss-org/retuve:latest python /app/examples/high_level_functions/3dus.py
+```
+
 You can then run the following code to get a basic report:
 
 **WARNING: Before running this script, please make sure you have read the data disclaimer at `DATA_DISCLAIMER.md`.**

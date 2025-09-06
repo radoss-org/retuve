@@ -16,7 +16,6 @@
 Default Configs for Each Subconfig in the Keyphrases Module.
 """
 
-import torch
 from radstract.data.dicom import DicomTypes
 
 from retuve.keyphrases.config import Config
@@ -130,7 +129,7 @@ base_config = Config(
     template=True,
     crop_coordinates=None,
     min_seg_confidence=0.6,
-    device=torch.device(0 if torch.cuda.is_available() else "cpu"),
+    device="cpu",
     operation_type=OperationType.SEG,
     dev=False,
     replace_old=False,
