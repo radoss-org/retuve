@@ -45,6 +45,7 @@ pip install git+https://github.com/radoss-org/retuve.git
 If you have docker, you can quick-run with:
 
 ```bash
+git clone https://github.com/radoss-org/retuve && cd retuve
 sudo docker run -i --rm \
   -v "${PWD}":/app/\
   -w /app \
