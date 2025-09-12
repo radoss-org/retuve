@@ -21,7 +21,6 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import open3d as o3d
-import plotly.graph_objects as go
 import trimesh
 from numpy.typing import NDArray
 from scipy.spatial import Delaunay, _qhull
@@ -68,7 +67,7 @@ def build_3d_visual(
     cr_points: List[CoordinatesArray3D],
     hip_datas: HipDatasUS,
     config: Config,
-) -> go.Figure:
+):
     """
     Build the 3D visual for the hip US module.
 
@@ -82,6 +81,8 @@ def build_3d_visual(
 
     :return: The 3D visual.
     """
+
+    import plotly.graph_objects as go
 
     # Get vertices and faces
     vertices = np.asarray(illium_mesh.vertices)

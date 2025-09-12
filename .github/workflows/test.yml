@@ -53,6 +53,10 @@ jobs:
       run: |
         poetry run poe format --check
 
+    - name: Get Chrome
+      run: |
+        poetry run kaleido_get_chrome
+
     - name: Get all test plugins/data
       run: |
         poetry run poe testgetplugins

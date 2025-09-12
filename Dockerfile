@@ -24,4 +24,6 @@ COPY . .
 
 RUN pip install -e .
 
+RUN kaleido_get_chrome
+
 CMD ["poe", "testgen"]

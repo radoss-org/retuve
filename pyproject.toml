@@ -28,6 +28,7 @@ setuptools = "^80.9.0"
 starlette = "^0.47.2"
 urllib3 = "^2.5.0"
 requests = "^2.32.4"
+plotly = "^6.3.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -23,7 +23,6 @@ from typing import List, Tuple
 
 import cv2
 import numpy as np
-import plotly.graph_objects as go
 from attr import has
 from PIL import Image, ImageOps
 from radstract.data.nifti import NIFTI, convert_images_to_nifti_labels
@@ -271,6 +270,8 @@ def draw_table(shape: tuple, hip_datas: HipDatasUS) -> np.ndarray:
 
     :return: The Image with the Table and any errors
     """
+    import plotly.graph_objects as go
+
     start = time.time()
 
     # Create empty image with the specified shape
