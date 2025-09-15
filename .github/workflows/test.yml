@@ -44,7 +44,7 @@ jobs:
 
     - name: Get Chrome
       run: |
-        uv run kaleido_get_chrome
+        uv run python -c "import kaleido; kaleido.kaleido.get_chrome_sync()"
 
     - name: Get all test plugins/data
       run: |
