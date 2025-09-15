@@ -32,25 +32,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
         with:
-          python-version: "3.11"
+          version: "latest"
 
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Restore uv cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
 
       - name: Install dependencies
-        run: poetry install --no-interaction --no-ansi
+        run: uv sync
 
       - name: Install Torch
-        run: poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+        run: uv add torch torchvision --index https://download.pytorch.org/whl/cpu
 
       - name: Build docs with pdoc
-        run: poetry run pdoc -d numpy -o docs retuve --logo https://files.mcaq.me/52kj1.png
+        run: uv run pdoc -d numpy -o docs retuve --logo https://files.mcaq.me/52kj1.png
 
       - name: Build package
-        run: poetry build
+        run: uv build
 
       - name: Include build artifacts in docs
         run: |

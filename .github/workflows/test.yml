@@ -15,56 +15,45 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      run: uv python install 3.10
+
+    - name: Restore uv cache
+      uses: actions/cache@v4
       with:
-        python-version: '3.10'
-
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 1.5.1
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-
-    - name: Add Poetry to PATH
-      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Create .venv directory
-      run: mkdir -p .venv
-
-    - name: Cache Poetry dependencies
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
         restore-keys: |
-          ${{ runner.os }}-poetry-
-          ${{ runner.os }}-
+          ${{ runner.os }}-uv-
 
     - name: Install dependencies
       run: |
-        poetry install
-        pip install poethepoet
+        uv sync
+        uv add --dev poethepoet
 
     - name: Check code formatting with black
       run: |
-        poetry run poe format --check
+        uv run poe format --check
 
     - name: Get Chrome
       run: |
-        poetry run kaleido_get_chrome
+        uv run kaleido_get_chrome
 
     - name: Get all test plugins/data
       run: |
-        poetry run poe testgetplugins
+        uv run poe testgetplugins
 
     - name: Generate test data and check for no changes
       run: |
         # Use a temporary file to capture output while also displaying it
-        poetry run poe testgen 2>&1 | tee temp_output.txt
+        uv run poe testgen 2>&1 | tee temp_output.txt
         output=$(cat temp_output.txt)
         rm temp_output.txt
         if ! echo "$output" | grep -q "No changes detected; no new release note created."; then
@@ -77,7 +66,7 @@ jobs:
     - name: Run tests
       run: |
         sudo rm -rf tmp/*
-        poetry run poe test_all
+        uv run poe test_all
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5

@@ -115,25 +115,27 @@ You can clone the repository and install the dependencies with the following com
 git clone https://github.com/radoss-org/retuve.git
 ```
 
-You can then install retuve with poetry, and then run the tests:
+You can then install retuve with uv, and then run the tests:
 
 **NOTE: These tests are about testing consistency between changes, and not directly testing the accuracy of the AI. See `changenotes` for tracking.**
 
 ```bash
-# Needed for the scripts
-pip install poethepoet
-
 cd retuve
-poetry install
+
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv sync
 
 # Generate the test data
-poe testgen
+uv run poe testgen
 
 # Run all tests, including examples.
-poe test_all
+uv run poe test_all
 
 # Get info on all other dev scripts
-poe help
+uv run poe help
 ```
 """
 
