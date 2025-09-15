@@ -127,7 +127,8 @@ for owner, repo, branch, directory, output_dir in to_download:
     subprocess.run(
         [
             "uv",
-            "add",
+            "pip",
+            "install",
             "--no-deps",
             f"git+https://github.com/{owner}/{repo}.git",
         ],
