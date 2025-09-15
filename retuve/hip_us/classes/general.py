@@ -174,9 +174,7 @@ class HipDataUS:
             }
 
         return {
-            "metrics": [
-                {metric.name: metric.value} for metric in self.metrics
-            ],
+            "metrics": [{metric.name: metric.value} for metric in self.metrics],
             "keyphrase": config.name,
             "dev_metrics": dev_metrics.json_dump(),
         }
@@ -258,13 +256,10 @@ class HipDatasUS:
         """
         return {
             "metrics": [
-                {metric.dump()[0]: metric.dump()[1:]}
-                for metric in self.metrics
+                {metric.dump()[0]: metric.dump()[1:]} for metric in self.metrics
             ],
             "graf_frame": self.graf_frame,
-            "dev_metrics": (
-                self.dev_metrics.json_dump() if self.dev_metrics else None
-            ),
+            "dev_metrics": (self.dev_metrics.json_dump() if self.dev_metrics else None),
             "recorded_error": str(self.recorded_error),
             "keyphrase": config.name,
         }

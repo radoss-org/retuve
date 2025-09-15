@@ -76,10 +76,7 @@ def find_cov_landmarks(
     radius = diameter / 2
 
     center = (
-        int(
-            (abs(most_left_point[0] - most_right_point[0]) / 2)
-            + most_left_point[0]
-        ),
+        int((abs(most_left_point[0] - most_right_point[0]) / 2) + most_left_point[0]),
         int(top_most_point[1] + radius),
     )
 
