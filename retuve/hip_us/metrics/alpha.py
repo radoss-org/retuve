@@ -210,7 +210,10 @@ def bad_alpha(hip: HipDataUS) -> bool:
     :return: bool: True if the Alpha Angle is bad.
     """
 
-    if hip.get_metric(MetricUS.ALPHA) > 90:
+    if (
+        hip.get_metric(MetricUS.ALPHA) < 0
+        or hip.get_metric(MetricUS.ALPHA) > 90
+    ):
         return True
 
     return False

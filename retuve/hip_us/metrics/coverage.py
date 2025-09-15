@@ -153,6 +153,7 @@ def find_coverage(landmarks: LandmarksUS) -> float:
         and landmarks.mid_cov_point
         and landmarks.point_D
         and landmarks.point_d
+        and landmarks.point_D[1] > landmarks.point_d[1]
     ):
         return 0
 
