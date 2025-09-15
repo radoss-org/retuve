@@ -107,6 +107,9 @@ def find_cov_landmarks(
         radius_x = radius * np.cos(np.radians(angle))
         radius_y = radius * np.sin(np.radians(angle))
 
+        if np.isnan(center[0] + radius_x):
+            return landmarks
+
         point_above = (
             int(center[0] + radius_x),
             int(center[1] + radius_y),
@@ -207,7 +210,7 @@ def bad_coverage(hip: HipDataUS) -> bool:
     """
 
     if (
-        hip.get_metric(MetricUS.COVERAGE) < 0.1
+        hip.get_metric(MetricUS.COVERAGE) < 0
         or hip.get_metric(MetricUS.COVERAGE) > 0.9
     ):
         return True
