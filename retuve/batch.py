@@ -25,8 +25,6 @@ import shutil
 import time
 import traceback
 
-import torch
-
 from retuve.funcs import retuve_run
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Outputs

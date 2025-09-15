@@ -22,11 +22,14 @@ import logging
 
 MS_CONVERSION_FACTOR = 1000
 
-ulogger = logging.getLogger("uvicorn")
-
-# check if logger exists
-if not ulogger.hasHandlers():
-    ulogger = logging.getLogger()
+ulogger = logging.getLogger("retuve")
+ulogger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(
+    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+)
+ulogger.addHandler(handler)
+ulogger.propagate = False
 
 
 def log_timings(timings, title=None):

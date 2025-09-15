@@ -10,41 +10,29 @@ python = ">=3.10,<3.13"
 radstract = { git = "https://github.com/radoss-org/radstract.git" }
 fire = "^0.7.0"
 moviepy = "^2.2.1"
-plotly = "^6.1.1"
 open3d = "^0.19.0"
 addict = "^2.4.0"
 afterthought = "^0.5.0"
 jinja2 = "^3.1.6"
 aiohttp = "^3.12.14"
-vulture = "^2.11"
-pytest-cov = "^5.0.0"
-pytest-mock = "^3.14.1"
-pdoc = "^14.4.0"
 deptry = "^0.23.0"
 scikit-learn = "^1.7.1"
 pyyaml = "^6.0.2"
 filelock = "^3.18.0"
-pytest-xdist = "^3.8.0"
 fastapi = "^0.116.1"
 httpx = "^0.28.1"
 python-multipart = "^0.0.20"
 uvicorn = "^0.35.0"
-black = "^25.1.0"
 h11 = "^0.16.0"
 setuptools = "^80.9.0"
 starlette = "^0.47.2"
 urllib3 = "^2.5.0"
 requests = "^2.32.4"
-opencv-python = "^4.11.0.86"
+plotly = "^6.3.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[[tool.poetry.source]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cu121"
-priority = "explicit"
 
 [tool.coverage.run]
 # Specify the directory and filename for the coverage data
