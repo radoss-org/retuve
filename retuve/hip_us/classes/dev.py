@@ -43,6 +43,7 @@ class DevMetricsUS:
         self.critial_error = False
         self.cr_points = []
         self.total_frames = 0
+        self.average_ilium_angle_baseline = 0
 
     def __repr__(self) -> str:
         return (
@@ -54,7 +55,8 @@ class DevMetricsUS:
             f"fem_mid_frame={self.fem_mid_frame}, "
             f"critial_error={self.critial_error}, "
             f"cr_points={self.cr_points}, "
-            f"total_frames={self.total_frames})"
+            f"total_frames={self.total_frames}, "
+            f"average_ilium_angle_baseline={self.average_ilium_angle_baseline})"
         )
 
     def data(self) -> List:
@@ -73,6 +75,7 @@ class DevMetricsUS:
             self.critial_error,
             self.cr_points,
             self.total_frames,
+            self.average_ilium_angle_baseline,
         ]
 
     def json_dump(self) -> Dict[str, List]:
@@ -93,4 +96,5 @@ class DevMetricsUS:
             "critial_error": self.critial_error,
             "cr_points": self.cr_points,
             "total_frames": self.total_frames,
+            "average_ilium_angle_baseline": self.average_ilium_angle_baseline,
         }

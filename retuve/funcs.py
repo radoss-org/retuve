@@ -21,10 +21,12 @@ import time
 from typing import Any, BinaryIO, Callable, Dict, List, Tuple, Union
 
 import pydicom
+from moviepy import VideoFileClip
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 from PIL import Image
 from plotly.graph_objs import Figure
 from radstract.data.dicom import (
+    DicomTypes,
     convert_dicom_to_images,
     convert_images_to_dicom,
 )
@@ -103,6 +105,7 @@ def process_segs_us(
         List[SegFrameObjects],
     ],
     modes_func_kwargs_dict: Dict[str, Any],
+    called_by_2dus: bool = False,
 ) -> Tuple[HipDatasUS, List[SegFrameObjects], Tuple[int, int, int]]:
     """
     Process the segmentation for the 3DUS.
@@ -111,17 +114,73 @@ def process_segs_us(
     :param file: The file.
     :param modes_func: The mode function.
     :param modes_func_kwargs_dict: The mode function kwargs.
+    :param called_by_2dus: Whether the calling was from the 2DUS function.
 
     :return: The hip datas, the results, and the shape.
     """
 
     results: List[SegFrameObjects] = modes_func(file, config, **modes_func_kwargs_dict)
     results, shape = pre_process_segs_us(results, config)
+
+    # Run any custom segmentation pre-process hooks
+    for preprocess in getattr(config.hip, "seg_preprocess_functions", []) or []:
+        try:
+            name, func = (
+                preprocess if isinstance(preprocess, tuple) else (None, preprocess)
+            )
+            updated = None
+            # Try signatures: (results, config), (results,), (results, config, shape)
+            for args in [
+                (results, config),
+                (results,),
+                (results, config, shape),
+            ]:
+                try:
+                    updated = func(*args)
+                    break
+                except TypeError:
+                    continue
+            if updated is not None:
+                results = updated
+        except Exception as e:
+            ulogger.error(
+                f"Seg preprocess function {getattr(preprocess, '__name__', str(preprocess))} failed: {e}"
+            )
+
     pre_edited_results = copy.deepcopy(results)
-    landmarks, all_seg_rejection_reasons = segs_2_landmarks_us(results, config)
+    landmarks, all_seg_rejection_reasons, ilium_angle_baselines = segs_2_landmarks_us(
+        results, config
+    )
     pre_edited_landmarks = copy.deepcopy(landmarks)
     hip_datas = landmarks_2_metrics_us(landmarks, shape, config)
     hip_datas.all_seg_rejection_reasons = all_seg_rejection_reasons
+    hip_datas.ilium_angle_baselines = ilium_angle_baselines
+
+    for metric_name, metric_func in config.hip.full_metric_functions:
+        value = 0
+        # Try different call signatures: (hip_datas, results, config), (hip_datas, config), (hip_datas)
+        for args in [
+            (hip_datas, results, config),
+            (hip_datas, config),
+            (hip_datas,),
+        ]:
+            try:
+                value = metric_func(*args)
+                break
+            except TypeError:
+                continue
+            except Exception:
+                value = 0
+                break
+        if getattr(hip_datas, "custom_metrics", None) is None:
+            hip_datas.custom_metrics = []
+
+        if not called_by_2dus:
+            custom_metric = Metric3D(name=metric_name, full=value)
+            hip_datas.custom_metrics.append(custom_metric)
+        else:
+            custom_metric = Metric2D(name=metric_name, value=value)
+            hip_datas.custom_metrics.append(custom_metric)
 
     if config.test_data_passthrough:
         hip_datas.pre_edited_results = pre_edited_results
@@ -316,8 +375,8 @@ def analyse_hip_3DUS(
 
     hip_datas = get_dev_metrics(hip_datas, results, config)
 
-    data_image = draw_table(shape, hip_datas)
-    image_arrays.append(data_image)
+    # data_image = draw_table(shape, hip_datas)
+    # image_arrays.append(data_image)
 
     ulogger.info(f"Total 3DUS time: {time.time() - start:.2f}s")
 
@@ -379,7 +438,11 @@ def analyse_hip_2DUS(
     try:
         if config.operation_type in OperationType.SEG:
             hip_datas, results, _ = process_segs_us(
-                config, data, modes_func, modes_func_kwargs_dict
+                config,
+                data,
+                modes_func,
+                modes_func_kwargs_dict,
+                called_by_2dus=True,
             )
     except Exception as e:
         ulogger.error(f"Critical Error: {e}")
@@ -396,6 +459,9 @@ def analyse_hip_2DUS(
 
     if return_seg_info:
         hip.seg_info = results
+
+    if hip.metrics is not None:
+        hip.metrics += hip_datas.custom_metrics
 
     return hip, image, hip_datas.dev_metrics
 
@@ -435,13 +501,18 @@ def analyse_hip_2DUS_sweep(
     try:
         if config.operation_type == OperationType.SEG:
             hip_datas, results, shape = process_segs_us(
-                config, image, modes_func, modes_func_kwargs_dict
+                config,
+                image,
+                modes_func,
+                modes_func_kwargs_dict,
+                called_by_2dus=True,
             )
         elif config.operation_type == OperationType.LANDMARK:
             raise NotImplementedError(
                 "This is not yet supported. Please use the seg operation type."
             )
     except Exception as e:
+        raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None, None
 
@@ -475,6 +546,17 @@ def analyse_hip_2DUS_sweep(
             config.visuals.min_vid_length,
         ),
     )
+
+    if (
+        graf_hip is None
+        or graf_hip.metrics is None
+        and hip_datas.custom_metrics is not None
+    ):
+        graf_hip = hip_datas[0]
+        graf_hip.metrics = hip_datas.custom_metrics
+
+    elif getattr(hip_datas, "custom_metrics", None) is not None:
+        graf_hip.metrics += hip_datas.custom_metrics
 
     return graf_hip, graf_image, hip_datas.dev_metrics, video_clip
 
@@ -535,7 +617,7 @@ def retuve_run(
 
     if hip_mode == HipMode.XRAY:
         if not isinstance(file, pydicom.FileDataset):
-            file = Image.open(file)
+            file = Image.open(file).convert("RGB")
         hip, image, dev_metrics = analyse_hip_xray_2D(
             file, config, modes_func, modes_func_kwargs_dict
         )
@@ -544,19 +626,56 @@ def retuve_run(
         hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
             file, config, modes_func, modes_func_kwargs_dict
         )
-        return RetuveResult(
-            hip_datas.json_dump(config),
-            hip_datas=hip_datas,
-            video_clip=video_clip,
-            visual_3d=visual_3d,
-        )
+        if hip_datas:
+            return RetuveResult(
+                hip_datas.json_dump(config),
+                hip_datas=hip_datas,
+                video_clip=video_clip,
+                visual_3d=visual_3d,
+            )
+        else:
+            return RetuveResult({})
     elif hip_mode == HipMode.US2D:
-        file = Image.open(file).convert("RGB")
+        if not isinstance(file, pydicom.FileDataset):
+            file = Image.open(file).convert("RGB")
+        else:
+            file = convert_dicom_to_images(file, dicom_type=DicomTypes.SINGLE)[
+                0
+            ].convert("RGB")
+
+            left, upper, width, height = 258, 84, 433, 503
+            crop_box = (left, upper, left + width, upper + height)
+            file = file.crop(crop_box)
+
         hip, image, dev_metrics = analyse_hip_2DUS(
             file, config, modes_func, modes_func_kwargs_dict
         )
         return RetuveResult(hip.json_dump(config, dev_metrics), hip=hip, image=image)
     elif hip_mode == HipMode.US2DSW:
+
+        if ".mp4" in file:
+            # Open the video file
+            video = VideoFileClip(file)
+
+            # Convert each frame to PIL Image
+            images = []
+            for frame in video.iter_frames():
+                # Convert numpy array to PIL Image
+                # crop each image using the following coordinates:
+                # left, right, width, height
+                # 308, 308, 1045, 1274
+                # Your coordinates: left, upper, width, height
+                left, upper, width, height = 308, 308, 1045, 1274
+
+                # Convert to Pillow crop format: (left, upper, right, lower)
+                crop_box = (left, upper, left + width, upper + height)
+                pil_image = Image.fromarray(frame).convert("RGB").crop(crop_box)
+                images.append(pil_image)
+
+            # Close the video file
+            video.close()
+            file = images
+
         hip, image, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
             file, config, modes_func, modes_func_kwargs_dict
         )

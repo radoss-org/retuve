@@ -33,6 +33,7 @@ default_US.visuals.line_thickness = 3
 default_US.visuals.bounding_box_thickness = 8
 default_US.hip.display_side = False
 default_US.visuals.display_segs = True
+default_US.batch.input_types = [".dcm", ".jpg", ".png"]
 
 default_US.register(name="default_US", store=False, silent=True)
 

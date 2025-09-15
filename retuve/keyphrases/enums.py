@@ -179,6 +179,7 @@ class Outputs:
     METRICS = "metrics.json"
     VIDEO_CLIP = "video.mp4"
     VISUAL3D = "visual_3d.html"
+    NIFTI = "seg.nii.gz"
 
 
 class GrafSelectionMethod:

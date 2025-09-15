@@ -103,6 +103,9 @@ def run_single(
         if retuve_result.visual_3d is not None:
             retuve_result.visual_3d.write_html(f"{savedir}/{fileid}{Outputs.VISUAL3D}")
 
+        if config.seg_export and hip_datas and hip_datas.nifti is not None:
+            hip_datas.nifti.save(f"{savedir}/{fileid}{Outputs.NIFTI}")
+
         # save the metrics to a file
         with open(f"{savedir}/{fileid}{Outputs.METRICS}", "w") as f:
             f.write(json.dumps(retuve_result.metrics))
@@ -157,15 +160,15 @@ def run_batch(config: Config):
         ]
 
         for error in errors:
-            ulogger.info(error)
+            print(error)
 
-        ulogger.info(f"Errors: {len(errors)}")
-        ulogger.info(f"Already processed: {already_processed}")
+        print(f"Errors: {len(errors)}")
+        print(f"Already processed: {already_processed}")
 
     end = time.time()
 
     if len(all_files) == 0:
-        ulogger.info(
+        print(
             f"No files with types in {config.batch.input_types} "
             "found in the directory"
         )
@@ -173,16 +176,16 @@ def run_batch(config: Config):
 
     # convert to minutes and seconds
     minutes, seconds = divmod(end - start, 60)
-    ulogger.info(f"Time taken: {minutes:.0f}m {seconds:.0f}s")
+    print(f"Time taken: {minutes:.0f}m {seconds:.0f}s")
 
     # Half to ignore the .nii files
-    no_of_files = len(all_files) // 2
+    no_of_files = len(all_files)
 
     if no_of_files == 0:
         no_of_files = 1
 
     # Print average time per file
-    ulogger.info(f"Average time per file: {(end - start) / no_of_files:.2f}s")
+    print(f"Average time per file: {(end - start) / no_of_files:.2f}s")
 
     # Print number of files
-    ulogger.info(f"Number of files: {no_of_files}")
+    print(f"Number of files: {no_of_files}")

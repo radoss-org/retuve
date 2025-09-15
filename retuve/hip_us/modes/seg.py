@@ -22,8 +22,6 @@ from typing import List
 
 import cv2
 import numpy as np
-from skimage.morphology import skeletonize
-
 from retuve.classes.seg import (
     MidLine,
     NDArrayImg_NxNx3_AllWhite,
@@ -39,6 +37,7 @@ from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import MidLineMove
 from retuve.logs import log_timings
 from retuve.utils import find_midline_extremes
+from skimage.morphology import skeletonize
 
 
 def get_midlines(
@@ -104,6 +103,7 @@ def segs_2_landmarks_us(
     hip_objs_list = []
     fem_head_ilium_wrong_way_round = 0
     all_rejection_reasons = []
+    ilium_angle_baselines = []
 
     for seg_frame_objs in results:
 
@@ -167,14 +167,17 @@ def segs_2_landmarks_us(
         illium = hip_objs.get(HipLabelsUS.IlliumAndAcetabulum, None)
         femoral = hip_objs.get(HipLabelsUS.FemoralHead, None)
 
-        landmarks = find_alpha_landmarks(illium, landmarks, config)
+        landmarks, ilium_angle_baseline = find_alpha_landmarks(
+            illium, landmarks, config
+        )
+        ilium_angle_baselines.append(ilium_angle_baseline)
         landmarks = find_cov_landmarks(femoral, landmarks, config)
 
         hip_landmarks.append(landmarks)
         timings.append(time.time() - start)
 
     log_timings(timings, title="Seg->Landmarking Speed:")
-    return hip_landmarks, all_rejection_reasons
+    return hip_landmarks, all_rejection_reasons, ilium_angle_baselines
 
 
 def pre_process_segs_us(

@@ -57,6 +57,10 @@ def _get_left_apex_angle(hip) -> bool:
     angle = np.arccos((a**2 + b**2 - np.linalg.norm(A - B) ** 2) / (2 * a * b))
     angle = np.degrees(angle)
 
+    # if angle is nan, return 0
+    if np.isnan(angle):
+        return 0
+
     return int(angle)
 
 

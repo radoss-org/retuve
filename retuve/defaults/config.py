@@ -18,7 +18,6 @@ Default Configs for Each Subconfig in the Keyphrases Module.
 
 import torch
 from radstract.data.dicom import DicomTypes
-
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import (
     ACASplit,
@@ -93,6 +92,8 @@ hip = HipConfig(
     graf_frame_selection=None,
     allow_irregular_illiums=False,
     allow_horizontal_flipping=False,
+    full_metric_functions=[],
+    seg_preprocess_functions=[],
 )
 
 trak = TrakConfig(

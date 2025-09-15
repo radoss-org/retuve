@@ -166,6 +166,7 @@ def get_3d_metrics_and_visuals(
     if all(metric.ant == 0 for metric in hip_datas.metrics):
         hip_datas.recorded_error.append("No Anterior values recorded.")
         hip_datas.recorded_error.critical = True
+
     if len(cr_points) != 0:
         fem_sph = FemSphere(cr_points[0], radius)
     else:

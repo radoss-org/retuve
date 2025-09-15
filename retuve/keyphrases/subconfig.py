@@ -18,7 +18,7 @@ All the subconfigs for Retuve
 
 import os
 import sys
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Tuple, Union
 
 from PIL import ImageFont
 from pyparsing import C
@@ -64,6 +64,8 @@ class HipConfig:
         graf_frame_selection: int,
         allow_irregular_illiums: bool,
         allow_horizontal_flipping: bool,
+        full_metric_functions: List[Tuple[str, Any]] = None,
+        seg_preprocess_functions: List[Any] = None,
     ):
         """
         The Hip Subconfig.
@@ -90,6 +92,8 @@ class HipConfig:
         :param graf_algo_threshold (float): The graf algorithm confidence threshold.
         :param graf_frame_selection (int): The frame to select for the GRAF MANUAL FRAME algorithm.
         :param allow_irregular_illiums (bool): Allow irregular illiums.
+        :param full_metric_functions (list[tuple[str, callable]]): Additional full metrics to compute. Each tuple is (name, func).
+        :param seg_preprocess_functions (list[callable|tuple[str, callable]]): Functions to run on segmentation results after pre_process_segs_us. Accept either callables or (name, callable) tuples. Each receives (results, config) and may return modified results.
         """
         self.midline_color = midline_color
         self.aca_split = aca_split
@@ -114,6 +118,8 @@ class HipConfig:
         self.graf_frame_selection = graf_frame_selection
         self.allow_irregular_illiums = allow_irregular_illiums
         self.allow_horizontal_flipping = allow_horizontal_flipping
+        self.full_metric_functions = full_metric_functions or []
+        self.seg_preprocess_functions = seg_preprocess_functions or []
 
 
 class TrakConfig:

@@ -18,6 +18,8 @@ A function for getting all the other metrics that are just for development purpo
 
 from typing import List
 
+import numpy as np
+
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.dev import DevMetricsUS
 from retuve.hip_us.classes.enums import HipLabelsUS
@@ -45,6 +47,7 @@ def get_dev_metrics(
 
     ace_marked_hips = []
     fem_marked_hips = []
+    ilium_angle_baselines = []
 
     for hip_data, seg_frame_objs in zip(hip_datas, results):
         detected = [seg_obj.cls for seg_obj in seg_frame_objs]
@@ -92,6 +95,10 @@ def get_dev_metrics(
         ]
 
     dev_metrics.total_frames = len(hip_datas)
+
+    dev_metrics.average_ilium_angle_baseline = round(
+        np.mean(hip_datas.ilium_angle_baselines), 2
+    )
 
     hip_datas.dev_metrics = dev_metrics
 
