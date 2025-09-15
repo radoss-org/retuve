@@ -52,7 +52,7 @@ class Config:
         crop_coordinates: Tuple[float],
         template: bool,
         min_seg_confidence: float,
-        device: "torch.Device",
+        device: "torch.Device",  # type: ignore
         operation_type: OperationType,
         dev: bool,
         replace_old: bool,

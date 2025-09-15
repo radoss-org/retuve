@@ -76,7 +76,10 @@ def find_cov_landmarks(
     radius = diameter / 2
 
     center = (
-        int((abs(most_left_point[0] - most_right_point[0]) / 2) + most_left_point[0]),
+        int(
+            (abs(most_left_point[0] - most_right_point[0]) / 2)
+            + most_left_point[0]
+        ),
         int(top_most_point[1] + radius),
     )
 
@@ -203,7 +206,10 @@ def bad_coverage(hip: HipDataUS) -> bool:
     :return: bool: True if the Coverage is bad.
     """
 
-    if hip.get_metric(MetricUS.COVERAGE) < 0 or hip.get_metric(MetricUS.COVERAGE) > 1:
+    if (
+        hip.get_metric(MetricUS.COVERAGE) < 0.1
+        or hip.get_metric(MetricUS.COVERAGE) > 0.9
+    ):
         return True
 
     return False

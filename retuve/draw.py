@@ -155,14 +155,6 @@ def resize_data_for_display(
             if seg_obj.midline is None:
                 continue
 
-            for i, point in enumerate(seg_obj.midline):
-                x, y = _calculate_new_coordinates(
-                    seg_frame_objs.img.shape[:2],
-                    final_image.shape[:2],
-                    point,
-                )
-                seg_obj.midline[i] = (x, y)
-
             for i, point in enumerate(seg_obj.midline_moved):
                 x, y = _calculate_new_coordinates(
                     seg_frame_objs.img.shape[:2],

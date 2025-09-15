@@ -23,6 +23,7 @@ from typing import List
 import cv2
 import numpy as np
 from filelock import FileLock
+
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.enums import HipLabelsUS
 from retuve.hip_us.classes.general import HipDatasUS
@@ -30,8 +31,6 @@ from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import GrafSelectionMethod, MetricUS
 from retuve.logs import ulogger
 from retuve.utils import warning_decorator
-
-DO_CALIBRATION = False
 
 
 def _get_left_apex_angle(hip) -> bool:
@@ -221,7 +220,7 @@ def graf_frame_algo(
         2,
     )
 
-    if file_id and DO_CALIBRATION:
+    if file_id and getattr(config, "do_calibration", False):
         data = {
             "alpha_value": alpha_value,
             "line_flatness_value": line_flatness_value,
@@ -233,7 +232,7 @@ def graf_frame_algo(
         }
 
         # Create folder for the JSON file
-        json_folder = f"./scripts/val/cali/"
+        json_folder = f"./env/calibration/data"
         os.makedirs(json_folder, exist_ok=True)
 
         # Define the path to the JSON file and the lock file
