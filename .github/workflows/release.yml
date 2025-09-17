@@ -46,35 +46,10 @@ jobs:
           path: dist/
 
   test:
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/test.yml
     needs: build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.10
-
-      - name: Restore uv cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
-
-      - name: Install dependencies
-        run: |
-          uv sync
-          uv add --dev poethepoet
-
-      - name: Run tests
-        run: uv run poe test_all
+    with:
+      needs_build: true
 
   publish:
     runs-on: ubuntu-latest
