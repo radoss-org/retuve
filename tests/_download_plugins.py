@@ -118,7 +118,13 @@ for owner, repo, branch, directory, output_dir in to_download:
     # Install the package using pip
     print("Installing the package from the repository...")
     subprocess.run(
-        ["uv", "pip", "install", "ultralytics", "albumentations"],
+        [
+            "uv",
+            "pip",
+            "install",
+            "ultralytics",
+            "git+https://github.com/nidus-lab/stem-cv.git",
+        ],
         check=True,
     )
     subprocess.run(
