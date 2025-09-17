@@ -51,9 +51,6 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Install Torch
-        run: uv add torch torchvision --index https://download.pytorch.org/whl/cpu
-
       - name: Build docs with pdoc
         run: uv run pdoc -d numpy -o docs retuve --logo https://files.mcaq.me/52kj1.png
 
