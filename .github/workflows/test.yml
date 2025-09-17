@@ -35,8 +35,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv sync
-        uv add --dev poethepoet
+        uv sync --dev
 
     - name: Check code formatting with black
       run: |
