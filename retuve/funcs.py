@@ -608,6 +608,7 @@ def retuve_run(
 
     :return: The Retuve result standardised output.
     """
+    org_file_name = file
     always_dcm = (
         len(config.batch.input_types) == 1 and ".dcm" in config.batch.input_types
     )
@@ -623,6 +624,7 @@ def retuve_run(
         )
         return RetuveResult(hip.json_dump(config, dev_metrics), image=image, hip=hip)
     elif hip_mode == HipMode.US3D:
+        modes_func_kwargs_dict["file_id"] = org_file_name.split("/")[-1]
         hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
             file, config, modes_func, modes_func_kwargs_dict
         )
