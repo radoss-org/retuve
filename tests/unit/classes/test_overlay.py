@@ -83,13 +83,11 @@ def test_apply_to_image(overlay):
 
 def test_get_nifti_frame(overlay):
     seg_frame_objs = [
-        MagicMock(
-            empty=False,
-            points=[(10, 10), (20, 20), (30, 10)],
-            cls=MagicMock(value=1),
-        ),
+        MagicMock(empty=False, points=[(10, 10), (20, 20), (30, 10)]),
         MagicMock(empty=True),  # This one should be skipped
     ]
+    # Set cls attribute separately to avoid conflict with MagicMock constructor
+    seg_frame_objs[0].cls = MagicMock(value=1)
     shape = [100, 100]
     result = overlay.get_nifti_frame(seg_frame_objs, shape)
     assert isinstance(result, Image.Image)
