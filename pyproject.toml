@@ -1,42 +1,57 @@
-[tool.poetry]
+[project]
 name = "retuve"
-version = "0.1.0"
+version = "1.0.0"
 description = ""
-authors = ["Sharpz7 <adam.mcarthur62@gmail.com>"]
+authors = [
+    {name = "Sharpz7", email = "adam.mcarthur62@gmail.com"}
+]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-radstract = { git = "https://github.com/radoss-org/radstract.git" }
-fire = "^0.7.0"
-moviepy = "^2.2.1"
-open3d = "^0.19.0"
-addict = "^2.4.0"
-afterthought = "^0.5.0"
-jinja2 = "^3.1.6"
-aiohttp = "^3.12.14"
-deptry = "^0.23.0"
-scikit-learn = "^1.7.1"
-pyyaml = "^6.0.2"
-filelock = "^3.18.0"
-fastapi = "^0.116.1"
-httpx = "^0.28.1"
-python-multipart = "^0.0.20"
-uvicorn = "^0.35.0"
-h11 = "^0.16.0"
-setuptools = "^80.9.0"
-starlette = "^0.47.2"
-urllib3 = "^2.5.0"
-requests = "^2.32.4"
-plotly = "^6.3.0"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "radstract>=1.0.0",
+    "fire>=0.7.0",
+    "moviepy>=2.2.1",
+    "open3d>=0.19.0",
+    "addict>=2.4.0",
+    "afterthought>=0.5.0",
+    "jinja2>=3.1.6",
+    "aiohttp>=3.12.14",
+    "deptry>=0.23.0",
+    "scikit-learn>=1.7.1",
+    "pyyaml>=6.0.2",
+    "filelock>=3.18.0",
+    "fastapi>=0.116.1",
+    "httpx>=0.28.1",
+    "python-multipart>=0.0.20",
+    "uvicorn>=0.35.0",
+    "h11>=0.16.0",
+    "setuptools>=80.9.0",
+    "starlette>=0.47.2",
+    "urllib3>=2.5.0",
+    "requests>=2.32.4",
+    "plotly>=6.3.0",
+    "kaleido>=1.0.0",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.coverage.run]
 # Specify the directory and filename for the coverage data
 data_file = "tests/.coverage"
+
+[tool.uv]
+dev-dependencies = [
+    "black>=23.0.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=3.0.0",
+    "poethepoet>=0.20.0",
+    "vulture>=2.0.0",
+    "pdoc>=14.0.0",
+    "licensecheck>=3.0.0",
+]
 
 [tool.poe.tasks]
 # Under BSD: https://www.creatis.insa-lyon.fr/software/public/Gdcm/License.html
@@ -58,14 +73,12 @@ docs = [{ cmd = "poe pdoc_create" }]
 viewdocs = [{ cmd = "poe docs" }, { cmd = "npx http-server -o ./web/" }]
 examples = "pytest -n 4 --vv --dist=loadgroup ./examples/_test.py"
 testgen = [
-    { cmd = "poetry install" },
-    { cmd = "poetry run python ./tests/_get_test_data.py" },
+    { cmd = "uv run python ./tests/_get_test_data.py" },
 ]
 testgetplugins = [
-    { cmd = "poetry install" },
-    { cmd = "poetry run python ./tests/_download_plugins.py" },
+    { cmd = "uv run python ./tests/_download_plugins.py" },
 ]
-format = "poetry run black ."
+format = "black ."
 help_real.shell = """
     echo
     echo Retuve Script Help

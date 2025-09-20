@@ -21,7 +21,6 @@ from typing import Dict, List, Tuple, Union
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 from plotly.graph_objs import Figure
 from radstract.data.nifti import NIFTI
-
 from retuve.classes.general import RecordedError
 from retuve.classes.metrics import Metric2D, Metric3D
 from retuve.hip_us.classes.dev import DevMetricsUS
@@ -166,6 +165,13 @@ class HipDataUS:
 
         :return: Dictionary of the Hip Data in JSON format.
         """
+
+        if self.metrics is None:
+            return {
+                "metrics": [],
+                "keyphrase": config.name,
+                "dev_metrics": dev_metrics.json_dump(),
+            }
 
         return {
             "metrics": [{metric.name: metric.value} for metric in self.metrics],
