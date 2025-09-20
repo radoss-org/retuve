@@ -76,10 +76,7 @@ def find_cov_landmarks(
     radius = diameter / 2
 
     center = (
-        int(
-            (abs(most_left_point[0] - most_right_point[0]) / 2)
-            + most_left_point[0]
-        ),
+        int((abs(most_left_point[0] - most_right_point[0]) / 2) + most_left_point[0]),
         int(top_most_point[1] + radius),
     )
 
@@ -201,19 +198,22 @@ def draw_coverage(hip: HipDataUS, overlay: Overlay, config: Config) -> Overlay:
     return overlay
 
 
-def bad_coverage(hip: HipDataUS) -> bool:
+def bad_coverage(hip: HipDataUS, config: Config) -> bool:
     """
     Check if the Coverage is bad.
 
     :param hip: HipDataUS: The Hip Data.
+    :param config: Config: The Config.
 
     :return: bool: True if the Coverage is bad.
     """
 
-    if (
-        hip.get_metric(MetricUS.COVERAGE) < 0
-        or hip.get_metric(MetricUS.COVERAGE) > 0.9
-    ):
+    cov = hip.get_metric(MetricUS.COVERAGE)
+
+    # Lower bound configurable: treat zero as error when enabled
+    lower_bad = cov < 0 if not config.hip.count_0_coverage_as_error else cov <= 0
+
+    if lower_bad or cov > 0.9:
         return True
 
     return False

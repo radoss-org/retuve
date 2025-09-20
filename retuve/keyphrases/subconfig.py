@@ -66,6 +66,8 @@ class HipConfig:
         allow_horizontal_flipping: bool,
         full_metric_functions: List[Tuple[str, Any]] = None,
         seg_preprocess_functions: List[Any] = None,
+        use_polyfit_replace_apex: bool = True,
+        count_0_coverage_as_error: bool = False,
     ):
         """
         The Hip Subconfig.
@@ -93,7 +95,13 @@ class HipConfig:
         :param graf_frame_selection (int): The frame to select for the GRAF MANUAL FRAME algorithm.
         :param allow_irregular_illiums (bool): Allow irregular illiums.
         :param full_metric_functions (list[tuple[str, callable]]): Additional full metrics to compute. Each tuple is (name, func).
+            The callable may return one of the following:
+            - numeric value (e.g., float or int)
+            - (numeric value, dict_of_dev_metrics)
+            - dict_of_dev_metrics (if no numeric value is needed)
         :param seg_preprocess_functions (list[callable|tuple[str, callable]]): Functions to run on segmentation results after pre_process_segs_us. Accept either callables or (name, callable) tuples. Each receives (results, config) and may return modified results.
+        :param use_polyfit_replace_apex (bool): Use polyfit to replace apex outliers.
+        :param count_0_coverage_as_error (bool): Count 0 coverage as an error.
         """
         self.midline_color = midline_color
         self.aca_split = aca_split
@@ -120,6 +128,8 @@ class HipConfig:
         self.allow_horizontal_flipping = allow_horizontal_flipping
         self.full_metric_functions = full_metric_functions or []
         self.seg_preprocess_functions = seg_preprocess_functions or []
+        self.use_polyfit_replace_apex = use_polyfit_replace_apex
+        self.count_0_coverage_as_error = count_0_coverage_as_error
 
 
 class TrakConfig:

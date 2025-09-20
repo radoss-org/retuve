@@ -100,6 +100,16 @@ def get_dev_metrics(
         np.mean(hip_datas.ilium_angle_baselines), 2
     )
 
+    # Merge any custom dev metrics collected earlier (e.g., from full_metric_functions)
+    try:
+        if hasattr(hip_datas, "dev_metrics_custom") and hip_datas.dev_metrics_custom:
+            # Initialize the custom dict if absent
+            if not isinstance(dev_metrics.custom, dict):
+                dev_metrics.custom = {}
+            dev_metrics.custom.update(hip_datas.dev_metrics_custom)
+    except Exception:
+        pass
+
     hip_datas.dev_metrics = dev_metrics
 
     return hip_datas

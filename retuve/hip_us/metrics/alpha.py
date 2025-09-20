@@ -34,9 +34,7 @@ from retuve.utils import find_midline_extremes, warning_decorator
 APEX_RIGHT_FACTOR = 0
 
 
-def find_alpha_landmarks(
-    illium: SegObject, landmarks: LandmarksUS, config: Config
-):
+def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Config):
     if illium is None or illium.midline_moved is None:
         return landmarks, 0
 
@@ -95,9 +93,7 @@ def find_alpha_landmarks(
 
         if closest_point is not None:
             min_dist = np.hypot(closest_point[0] - px, closest_point[1] - py)
-            append_result(
-                (min_dist, (py, px), (closest_point[1], closest_point[0]))
-            )
+            append_result((min_dist, (py, px), (closest_point[1], closest_point[0])))
 
     if not results:
         return landmarks, 0
@@ -105,9 +101,7 @@ def find_alpha_landmarks(
     # Convert to NumPy for fast argmax
     results_arr = np.array(results, dtype=object)
     # Find max distance, break ties by furthest right
-    max_idx = max(
-        range(len(results)), key=lambda i: (results[i][0], results[i][1][1])
-    )
+    max_idx = max(range(len(results)), key=lambda i: (results[i][0], results[i][1][1]))
 
     max_distance, main_point, closest_point = results[max_idx]
 
@@ -216,10 +210,7 @@ def bad_alpha(hip: HipDataUS) -> bool:
     :return: bool: True if the Alpha Angle is bad.
     """
 
-    if (
-        hip.get_metric(MetricUS.ALPHA) <= 0
-        or hip.get_metric(MetricUS.ALPHA) > 90
-    ):
+    if hip.get_metric(MetricUS.ALPHA) <= 0 or hip.get_metric(MetricUS.ALPHA) > 90:
         return True
 
     return False

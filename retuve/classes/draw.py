@@ -150,16 +150,12 @@ class Overlay:
             if not seg_obj.empty:
                 draw.polygon(
                     seg_obj.points,
-                    fill=LabelColours.get_color_from_index(
-                        seg_obj.cls.value + 1
-                    ),
+                    fill=LabelColours.get_color_from_index(seg_obj.cls.value + 1),
                 )
 
         return seg_overlay
 
-    def draw_cross(
-        self, point: Tuple[int, int], override_line_thickness: int = None
-    ):
+    def draw_cross(self, point: Tuple[int, int], override_line_thickness: int = None):
         """
         Draws a cross of a given radius at a specified point on the overlay.
 
@@ -174,15 +170,13 @@ class Overlay:
             DrawTypes.POINTS,
             (x - radius, y, x + radius, y),
             fill=color,
-            width=override_line_thickness
-            or self.config.visuals.line_thickness,
+            width=override_line_thickness or self.config.visuals.line_thickness,
         )
         self.add_operation(
             DrawTypes.POINTS,
             (x, y - radius, x, y + radius),
             fill=color,
-            width=override_line_thickness
-            or self.config.visuals.line_thickness,
+            width=override_line_thickness or self.config.visuals.line_thickness,
         )
 
     def draw_segmentation(self, points: List[Tuple[int, int]]):
@@ -195,9 +189,7 @@ class Overlay:
         self.add_operation(
             DrawTypes.SEGS,
             points,
-            fill=self.config.visuals.seg_color.rgba(
-                self.config.visuals.seg_alpha
-            ),
+            fill=self.config.visuals.seg_color.rgba(self.config.visuals.seg_alpha),
         )
 
     def draw_box(self, box: Tuple[int, int, int, int], grafs: bool = False):

@@ -25,14 +25,15 @@ from retuve.classes.metrics import Metric2D
 from retuve.hip_us.classes.general import HipDatasUS, HipDataUS, LandmarksUS
 from retuve.hip_us.metrics.alpha import find_alpha_angle
 from retuve.hip_us.metrics.coverage import find_coverage
-from retuve.hip_us.metrics.curvature import find_curvature
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import MetricUS
 from retuve.logs import log_timings
 
 
 def _polyfit_replace_apex(
-    list_landmarks: List[LandmarksUS], degree: int = 2, max_pixel_err: float = 8.0
+    list_landmarks: List[LandmarksUS],
+    degree: int = 2,
+    max_pixel_err: float = 8.0,
 ) -> None:
     """
     Replace apex outliers using a simple polyfit across frames (time as z).
@@ -110,23 +111,20 @@ def landmarks_2_metrics_us(
     hips = HipDatasUS()
     timings = []
 
-    # Simple 3D polyfit-based outlier cleanup for apex points across frames
-    # Runs conservatively and only replaces clear outliers; keeps behavior simple
-    _polyfit_replace_apex(list_landmarks)
+    if config.hip.use_polyfit_replace_apex:
+        _polyfit_replace_apex(list_landmarks)
 
     for frame_no, landmarks in enumerate(list_landmarks):
         start = time.time()
 
         alpha = find_alpha_angle(landmarks)
         coverage = find_coverage(landmarks)
-        curvature = find_curvature(landmarks, shape, config)
 
         metrics = []
 
         for name, value in [
             (MetricUS.ALPHA, alpha),
             (MetricUS.COVERAGE, coverage),
-            (MetricUS.CURVATURE, curvature),
         ]:
             if name in config.hip.measurements:
                 metrics.append(Metric2D(name, value))

@@ -157,7 +157,7 @@ def handle_bad_frames(hip_datas: HipDatasUS, config: Config) -> HipDatasUS:
             bad_frame_reasons[i] = "Ilium Line not Flat"
             continue
 
-        if bad_coverage(hip):
+        if bad_coverage(hip, config):
             hip_datas[i] = empty_hip
             bad_frame_reasons[i] = "Coverage Value Non-Sensical"
             continue

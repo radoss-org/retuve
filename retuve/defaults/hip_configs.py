@@ -54,7 +54,6 @@ test_default_US = default_US.get_copy()
 test_default_US.hip.measurements = [
     MetricUS.ALPHA,
     MetricUS.COVERAGE,
-    MetricUS.CURVATURE,
     MetricUS.CENTERING_RATIO,
     MetricUS.ACA,
 ]

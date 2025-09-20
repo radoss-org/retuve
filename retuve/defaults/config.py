@@ -71,7 +71,6 @@ hip = HipConfig(
     measurements=[
         MetricUS.ALPHA,
         MetricUS.COVERAGE,
-        # MetricUS.CURVATURE,
         # MetricUS.CENTERING_RATIO,
         # MetricUS.ACA,
     ],
@@ -93,6 +92,8 @@ hip = HipConfig(
     allow_horizontal_flipping=False,
     full_metric_functions=[],
     seg_preprocess_functions=[],
+    use_polyfit_replace_apex=False,
+    count_0_coverage_as_error=False,
 )
 
 trak = TrakConfig(
