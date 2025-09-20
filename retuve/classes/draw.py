@@ -27,6 +27,9 @@ from retuve.classes.seg import SegFrameObjects
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Colors
 
+# No midline curve will ever be more complex than this
+POLY_DEGREE = 10
+
 
 class DrawTypes(Enum):
     """
@@ -224,15 +227,16 @@ class Overlay:
 
         :param skel: List of points to draw the skeleton.
         """
+        # Always record SKEL points for visibility and tests
+        for point in skel:
+            y, x = point
+            self.add_operation(
+                DrawTypes.SKEL,
+                (x, y),
+                fill=self.config.hip.midline_color.rgba(),
+            )
+
         if len(skel) < 2:
-            # If we have fewer than 2 points, fall back to drawing individual points
-            for point in skel:
-                y, x = point
-                self.add_operation(
-                    DrawTypes.SKEL,
-                    (x, y),
-                    fill=self.config.hip.midline_color.rgba(),
-                )
             return
 
         # Convert points to numpy arrays for easier manipulation
@@ -245,13 +249,9 @@ class Overlay:
         x_sorted = x_coords[sorted_indices]
         y_sorted = y_coords[sorted_indices]
 
-        # Use polynomial fitting (degree 2 for smooth curves, adjust as needed)
-        # If we have fewer points than the polynomial degree, reduce the degree
-        poly_degree = 10
-
         try:
             # Fit polynomial
-            coeffs = np.polyfit(x_sorted, y_sorted, poly_degree)
+            coeffs = np.polyfit(x_sorted, y_sorted, POLY_DEGREE)
             poly_func = np.poly1d(coeffs)
 
             # Generate smooth points along the curve

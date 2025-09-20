@@ -35,7 +35,7 @@ def modified_landmarks(landmarks_us_0):
 def test_find_alpha_landmarks(
     illium_0, modified_landmarks, config_us, expected_us_metrics, img_shape_us
 ):
-    landmarks = find_alpha_landmarks(illium_0, modified_landmarks, config_us)
+    landmarks, _ = find_alpha_landmarks(illium_0, modified_landmarks, config_us)
     assert isinstance(landmarks, LandmarksUS)
     assert hasattr(landmarks, "left")
     assert hasattr(landmarks, "right")

@@ -76,6 +76,8 @@ def set_side_info(
     for hip_data in hip_datas:
         if hip_data.frame_no < hip_datas.graf_frame:
             hip_data.side = Side.ANT
+        elif hip_data.frame_no == hip_datas.graf_frame:
+            hip_data.side = Side.GRAF
         else:
             hip_data.side = Side.POST
 

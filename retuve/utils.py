@@ -37,6 +37,10 @@ else:
     RETUVE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
+# Realistically long enough for any real-world x-ray image
+EXTENSION_LINE_LENGTH = 1000
+
+
 def register_config_dirs(config, other_dirs=[]):
     hippa_log_file_dir = os.path.dirname(config.api.hippa_logging_file)
     sql_path = os.path.dirname(config.api.db_path)
@@ -209,30 +213,28 @@ def point_left_right(p1: tuple, p2: tuple, p3: tuple) -> float:
     # Extend the line segment by 1000 pixels in both directions
     if x1 == x2:
         # Vertical line case - extend in y direction instead
-        extension = 1000
         if y2 > y1:
-            extended_y1 = y1 - extension
-            extended_y2 = y2 + extension
+            extended_y1 = y1 - EXTENSION_LINE_LENGTH
+            extended_y2 = y2 + EXTENSION_LINE_LENGTH
         else:
-            extended_y1 = y1 + extension
-            extended_y2 = y2 - extension
+            extended_y1 = y1 + EXTENSION_LINE_LENGTH
+            extended_y2 = y2 - EXTENSION_LINE_LENGTH
         extended_x1, extended_x2 = x1, x2
     else:
         # Calculate slope and extend in x direction
         slope = (y2 - y1) / (x2 - x1)
-        extension = 1000
 
         # Extend leftward from the leftmost point
         if x1 < x2:
-            extended_x1 = x1 - extension
-            extended_y1 = y1 - slope * extension
-            extended_x2 = x2 + extension
-            extended_y2 = y2 + slope * extension
+            extended_x1 = x1 - EXTENSION_LINE_LENGTH
+            extended_y1 = y1 - slope * EXTENSION_LINE_LENGTH
+            extended_x2 = x2 + EXTENSION_LINE_LENGTH
+            extended_y2 = y2 + slope * EXTENSION_LINE_LENGTH
         else:
-            extended_x1 = x1 + extension
-            extended_y1 = y1 + slope * extension
-            extended_x2 = x2 - extension
-            extended_y2 = y2 - slope * extension
+            extended_x1 = x1 + EXTENSION_LINE_LENGTH
+            extended_y1 = y1 + slope * EXTENSION_LINE_LENGTH
+            extended_x2 = x2 - EXTENSION_LINE_LENGTH
+            extended_y2 = y2 - slope * EXTENSION_LINE_LENGTH
 
     # Use extended points for the rest of the calculation
     x1, y1 = extended_x1, extended_y1

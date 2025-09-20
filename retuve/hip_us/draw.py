@@ -126,6 +126,25 @@ def draw_hips_us(
             graf_conf,
         )
 
+        # Run any custom post-draw hooks after base drawing (standard signature)
+        post_draw_funcs = getattr(config.hip, "post_draw_functions", []) or []
+        for name, func in [
+            (
+                (pdf[0], pdf[1])
+                if isinstance(pdf, tuple)
+                else (getattr(pdf, "__name__", None), pdf)
+            )
+            for pdf in post_draw_funcs
+        ]:
+            try:
+                out = func(final_hip, overlay, config)
+                if isinstance(out, Overlay):
+                    overlay = out
+            except Exception as e:
+                ulogger.error(
+                    f"Post-draw function {getattr(func, '__name__', str(func))} failed: {e}"
+                )
+
         if config.hip.display_bad_frame_reasons and hasattr(
             hip_datas, "bad_frame_reasons"
         ):

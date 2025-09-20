@@ -66,6 +66,8 @@ class HipConfig:
         allow_horizontal_flipping: bool,
         full_metric_functions: List[Tuple[str, Any]] = None,
         seg_preprocess_functions: List[Any] = None,
+        per_frame_metric_functions: List[Tuple[str, Any]] = None,
+        post_draw_functions: List[Any] = None,
         use_polyfit_replace_apex: bool = True,
         count_0_coverage_as_error: bool = False,
     ):
@@ -100,6 +102,8 @@ class HipConfig:
             - (numeric value, dict_of_dev_metrics)
             - dict_of_dev_metrics (if no numeric value is needed)
         :param seg_preprocess_functions (list[callable|tuple[str, callable]]): Functions to run on segmentation results after pre_process_segs_us. Accept either callables or (name, callable) tuples. Each receives (results, config) and may return modified results.
+        :param per_frame_metric_functions (list[tuple[str, callable]]): Functions that compute custom per-frame metrics. Each tuple is (name, func). The callable MUST have signature (hip, seg_frame_objs, config) and MUST return (value, dev_metrics_dict). If value is None, it is ignored. dev_metrics_dict may be empty.
+        :param post_draw_functions (list[callable|tuple[str, callable]]): Drawing hooks executed after base drawing. Each callable MUST have signature (hip, overlay, config) and MUST return an Overlay (or None to skip). For US, use hip.side to detect Graf/Ant/Post as needed.
         :param use_polyfit_replace_apex (bool): Use polyfit to replace apex outliers.
         :param count_0_coverage_as_error (bool): Count 0 coverage as an error.
         """
@@ -128,6 +132,8 @@ class HipConfig:
         self.allow_horizontal_flipping = allow_horizontal_flipping
         self.full_metric_functions = full_metric_functions or []
         self.seg_preprocess_functions = seg_preprocess_functions or []
+        self.per_frame_metric_functions = per_frame_metric_functions or []
+        self.post_draw_functions = post_draw_functions or []
         self.use_polyfit_replace_apex = use_polyfit_replace_apex
         self.count_0_coverage_as_error = count_0_coverage_as_error
 

@@ -27,6 +27,7 @@ from PIL import Image
 from radstract.data.dicom import convert_dicom_to_images
 
 from retuve.defaults.hip_configs import default_xray, test_default_US
+from retuve.hip_us.classes.enums import Side
 from retuve.defaults.manual_seg import (
     manual_predict_us,
     manual_predict_us_dcm,
@@ -233,6 +234,71 @@ hip_data, img, dev_metrics = analyse_hip_2DUS(
 img.save(f"{test_data_dir}/img_2dus.jpg")
 
 json_file_us = hip_data.json_dump(test_default_US, dev_metrics)
+
+
+# ------------------------------------------------------------------------------
+# Generate 2DUS and X-ray images with a custom post-draw overlay
+# ------------------------------------------------------------------------------
+
+
+# Simple per-frame metric for US (count seg objects) and post-draw hook that
+# draws the count on the Graf frame for visibility and determinism.
+def _seg_object_count(hip, seg_frame_objs, config):
+    try:
+        return float(len(seg_frame_objs)), None
+    except Exception:
+        return 0.0, None
+
+
+def _draw_us_seg_count_on_graf(hip, overlay, config):
+    try:
+        if getattr(hip, "side", None) == Side.GRAF:
+            count = hip.get_metric("seg object count") or 0
+            overlay.draw_text(f"count: {int(count)}", 20, 20, header="h2", grafs=True)
+    except Exception:
+        pass
+    return overlay
+
+
+# 2DUS with custom metric and drawing
+cfg_us_custom = test_default_US.get_copy()
+cfg_us_custom.hip.per_frame_metric_functions = [("seg object count", _seg_object_count)]
+cfg_us_custom.hip.post_draw_functions = [
+    ("us seg count on graf", _draw_us_seg_count_on_graf)
+]
+
+hip_custom, img_custom, dev_custom = analyse_hip_2DUS(
+    img=images[FRAME],
+    keyphrase=cfg_us_custom,
+    modes_func=manual_predict_us,
+    modes_func_kwargs_dict={"seg": seg_file, "seg_idx": FRAME},
+)
+
+img_custom.save(f"{test_data_dir}/img_2dus_custom.jpg")
+
+
+# X-ray: add a post-draw hook that writes a simple, deterministic label.
+def _draw_xray_custom(hip, overlay, config):
+    try:
+        val = hip.get_metric("ihdi") if hasattr(hip, "get_metric") else None
+        txt = f"custom: {val if val is not None else 0}"
+        overlay.draw_text(txt, 20, 20, header="h2")
+    except Exception:
+        pass
+    return overlay
+
+
+cfg_xray_custom = default_xray.get_copy()
+cfg_xray_custom.hip.post_draw_functions = [("xray custom", _draw_xray_custom)]
+
+hip_xc, img_xc, dev_xc = analyse_hip_xray_2D(
+    img_raw,
+    keyphrase=cfg_xray_custom,
+    modes_func=manual_predict_xray,
+    modes_func_kwargs_dict=labels,
+)
+
+img_xc.save(f"{test_data_dir}/img_xray_custom.jpg")
 
 
 # ==============================================================================

@@ -92,6 +92,8 @@ hip = HipConfig(
     allow_horizontal_flipping=False,
     full_metric_functions=[],
     seg_preprocess_functions=[],
+    per_frame_metric_functions=[],
+    post_draw_functions=[],
     use_polyfit_replace_apex=False,
     count_0_coverage_as_error=False,
 )

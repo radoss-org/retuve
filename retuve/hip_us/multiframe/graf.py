@@ -228,6 +228,7 @@ def graf_frame_algo(
         2,
     )
 
+    # This is an experimental feature with no support
     if file_id and getattr(config, "do_calibration", False):
         data = {
             "alpha_value": alpha_value,
@@ -240,7 +241,7 @@ def graf_frame_algo(
         }
 
         # Create folder for the JSON file
-        json_folder = f"./env/calibration/data"
+        json_folder = config.api.savedir + "/calibration-data"
         os.makedirs(json_folder, exist_ok=True)
 
         # Define the path to the JSON file and the lock file

@@ -173,8 +173,10 @@ class HipDataUS:
                 "dev_metrics": dev_metrics.json_dump(),
             }
 
+        # Serialize Metric2D objects as strings for deterministic comparisons
+        serialized_metrics: List[str] = [str(m) for m in self.metrics]
         return {
-            "metrics": metrics,
+            "metrics": serialized_metrics,
             "keyphrase": config.name,
             "dev_metrics": dev_metrics.json_dump(),
         }

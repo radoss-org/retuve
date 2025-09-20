@@ -93,6 +93,30 @@ def process_landmarks_xray(
     :return: The hip datas and the image arrays.
     """
     hip_datas_xray = landmarks_2_metrics_xray(landmark_results, config)
+
+    # Run custom per-image metric functions (standardized signature)
+    per_frame_funcs = getattr(config.hip, "per_frame_metric_functions", []) or []
+    if per_frame_funcs:
+        for hip, seg_frame_objs in zip(hip_datas_xray, seg_results):
+            for pf_name, pf_func in [
+                (
+                    (pf[0], pf[1])
+                    if isinstance(pf, tuple)
+                    else (getattr(pf, "__name__", "custom"), pf)
+                )
+                for pf in per_frame_funcs
+            ]:
+                out = pf_func(hip, seg_frame_objs, config)
+                value, dev_extra = (None, None)
+                if isinstance(out, tuple) and len(out) == 2:
+                    value, dev_extra = out
+                else:
+                    value = out
+                if value is not None:
+                    if hip.metrics is None:
+                        hip.metrics = []
+                    hip.metrics.append(Metric2D(name=pf_name, value=value))
+
     image_arrays = draw_hips_xray(hip_datas_xray, seg_results, config)
     return hip_datas_xray, image_arrays
 
@@ -214,6 +238,41 @@ def process_segs_us(
                 hip_datas.dev_metrics_custom[metric_name].update(dev_extra)
             except Exception:
                 pass
+
+    # Run custom per-frame metrics functions, if any
+    per_frame_funcs = getattr(config.hip, "per_frame_metric_functions", []) or []
+    if per_frame_funcs:
+        try:
+            for hip, seg_frame_objs in zip(hip_datas, results):
+                for pf_name, pf_func in [
+                    (
+                        (pf[0], pf[1])
+                        if isinstance(pf, tuple)
+                        else (getattr(pf, "__name__", "custom"), pf)
+                    )
+                    for pf in per_frame_funcs
+                ]:
+                    out = pf_func(hip, seg_frame_objs, config)
+                    # Expect (value, dev_dict)
+                    value, dev_extra = (None, None)
+                    if isinstance(out, tuple) and len(out) == 2:
+                        value, dev_extra = out
+                    else:
+                        # Back-compat: allow single numeric
+                        value = out
+                    if value is not None:
+                        try:
+                            if hip.metrics is None:
+                                hip.metrics = []
+                            hip.metrics.append(Metric2D(name=pf_name, value=value))
+                        except Exception:
+                            pass
+                    if isinstance(dev_extra, dict):
+                        hip_datas.dev_metrics_custom.setdefault(pf_name, []).append(
+                            dev_extra
+                        )
+        except Exception as e:
+            ulogger.error(f"Per-frame metric functions failed: {e}")
 
     if config.test_data_passthrough:
         hip_datas.pre_edited_results = pre_edited_results
@@ -375,7 +434,6 @@ def analyse_hip_3DUS(
                 "This is not yet supported. Please use the seg operation type."
             )
     except Exception as e:
-        raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None, None
 
@@ -547,7 +605,6 @@ def analyse_hip_2DUS_sweep(
                 "This is not yet supported. Please use the seg operation type."
             )
     except Exception as e:
-        raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None, None
 
