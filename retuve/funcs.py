@@ -119,14 +119,20 @@ def process_segs_us(
     :return: The hip datas, the results, and the shape.
     """
 
-    results: List[SegFrameObjects] = modes_func(file, config, **modes_func_kwargs_dict)
+    results: List[SegFrameObjects] = modes_func(
+        file, config, **modes_func_kwargs_dict
+    )
     results, shape = pre_process_segs_us(results, config)
 
     # Run any custom segmentation pre-process hooks
-    for preprocess in getattr(config.hip, "seg_preprocess_functions", []) or []:
+    for preprocess in (
+        getattr(config.hip, "seg_preprocess_functions", []) or []
+    ):
         try:
             name, func = (
-                preprocess if isinstance(preprocess, tuple) else (None, preprocess)
+                preprocess
+                if isinstance(preprocess, tuple)
+                else (None, preprocess)
             )
             updated = None
             # Try signatures: (results, config), (results,), (results, config, shape)
@@ -148,8 +154,8 @@ def process_segs_us(
             )
 
     pre_edited_results = copy.deepcopy(results)
-    landmarks, all_seg_rejection_reasons, ilium_angle_baselines = segs_2_landmarks_us(
-        results, config
+    landmarks, all_seg_rejection_reasons, ilium_angle_baselines = (
+        segs_2_landmarks_us(results, config)
     )
     pre_edited_landmarks = copy.deepcopy(landmarks)
     hip_datas = landmarks_2_metrics_us(landmarks, shape, config)
@@ -219,7 +225,9 @@ def analyse_hip_xray_2D(
     elif isinstance(img, Image.Image):
         data = [img]
     else:
-        raise ValueError(f"Invalid image type: {type(img)}. Expected Image or DICOM.")
+        raise ValueError(
+            f"Invalid image type: {type(img)}. Expected Image or DICOM."
+        )
 
     if config.operation_type in OperationType.LANDMARK:
         landmark_results, seg_results = modes_func(
@@ -329,7 +337,9 @@ def analyse_hip_3DUS(
         del modes_func_kwargs_dict["file_id"]
 
     # if a set of images, convert to a DICOM file
-    if isinstance(image, list) and all(isinstance(img, Image.Image) for img in image):
+    if isinstance(image, list) and all(
+        isinstance(img, Image.Image) for img in image
+    ):
         image = convert_images_to_dicom(image)
 
     try:
@@ -342,6 +352,7 @@ def analyse_hip_3DUS(
                 "This is not yet supported. Please use the seg operation type."
             )
     except Exception as e:
+        raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None, None
 
@@ -495,7 +506,9 @@ def analyse_hip_2DUS_sweep(
     hip_datas = HipDatasUS()
 
     # if a set of images, convert to a DICOM file
-    if isinstance(image, list) and all(isinstance(img, Image.Image) for img in image):
+    if isinstance(image, list) and all(
+        isinstance(img, Image.Image) for img in image
+    ):
         image = convert_images_to_dicom(image)
 
     try:
@@ -610,19 +623,25 @@ def retuve_run(
     """
     org_file_name = file
     always_dcm = (
-        len(config.batch.input_types) == 1 and ".dcm" in config.batch.input_types
+        len(config.batch.input_types) == 1
+        and ".dcm" in config.batch.input_types
     )
 
-    if always_dcm or (file.endswith(".dcm") and ".dcm" in config.batch.input_types):
+    if always_dcm or (
+        file.endswith(".dcm") and ".dcm" in config.batch.input_types
+    ):
         file = pydicom.dcmread(file)
 
     if hip_mode == HipMode.XRAY:
         if not isinstance(file, pydicom.FileDataset):
             file = Image.open(file).convert("RGB")
+
         hip, image, dev_metrics = analyse_hip_xray_2D(
             file, config, modes_func, modes_func_kwargs_dict
         )
-        return RetuveResult(hip.json_dump(config, dev_metrics), image=image, hip=hip)
+        return RetuveResult(
+            hip.json_dump(config, dev_metrics), image=image, hip=hip
+        )
     elif hip_mode == HipMode.US3D:
         modes_func_kwargs_dict["file_id"] = org_file_name.split("/")[-1]
         hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
@@ -645,39 +664,13 @@ def retuve_run(
                 0
             ].convert("RGB")
 
-            left, upper, width, height = 258, 84, 433, 503
-            crop_box = (left, upper, left + width, upper + height)
-            file = file.crop(crop_box)
-
         hip, image, dev_metrics = analyse_hip_2DUS(
             file, config, modes_func, modes_func_kwargs_dict
         )
-        return RetuveResult(hip.json_dump(config, dev_metrics), hip=hip, image=image)
+        return RetuveResult(
+            hip.json_dump(config, dev_metrics), hip=hip, image=image
+        )
     elif hip_mode == HipMode.US2DSW:
-
-        if ".mp4" in file:
-            # Open the video file
-            video = VideoFileClip(file)
-
-            # Convert each frame to PIL Image
-            images = []
-            for frame in video.iter_frames():
-                # Convert numpy array to PIL Image
-                # crop each image using the following coordinates:
-                # left, right, width, height
-                # 308, 308, 1045, 1274
-                # Your coordinates: left, upper, width, height
-                left, upper, width, height = 308, 308, 1045, 1274
-
-                # Convert to Pillow crop format: (left, upper, right, lower)
-                crop_box = (left, upper, left + width, upper + height)
-                pil_image = Image.fromarray(frame).convert("RGB").crop(crop_box)
-                images.append(pil_image)
-
-            # Close the video file
-            video.close()
-            file = images
-
         hip, image, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
             file, config, modes_func, modes_func_kwargs_dict
         )

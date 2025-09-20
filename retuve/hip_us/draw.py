@@ -60,7 +60,9 @@ def draw_fem_head(
     :return: The Drawn Overlay
     """
     # Get radius at z
-    radius = circle_radius_at_z(fem_sph.radius, fem_sph.center[2], z_gap * hip.frame_no)
+    radius = circle_radius_at_z(
+        fem_sph.radius, fem_sph.center[2], z_gap * hip.frame_no
+    )
 
     # draw the circle
     overlay.draw_circle((fem_sph.center[0], fem_sph.center[1]), radius)
@@ -96,7 +98,9 @@ def draw_hips_us(
             hip, seg_frame_objs
         )
 
-        overlay = Overlay((final_image.shape[0], final_image.shape[1], 3), config)
+        overlay = Overlay(
+            (final_image.shape[0], final_image.shape[1], 3), config
+        )
 
         overlay = draw_seg(final_seg_frame_objs, overlay, config)
 
@@ -245,9 +249,6 @@ def draw_other(
 
     if config.hip.draw_midline:
         for seg_obj in seg_frame_objs:
-            if seg_obj.midline is not None:
-                overlay.draw_skeleton(seg_obj.midline)
-
             if seg_obj.midline_moved is not None:
                 overlay.draw_skeleton(seg_obj.midline_moved)
 
@@ -278,7 +279,9 @@ def draw_table(shape: tuple, hip_datas: HipDatasUS) -> np.ndarray:
     empty_img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
 
     # Find new shape by running 1024 algo
-    shape = ImageOps.contain(Image.fromarray(empty_img), (TARGET_SIZE)).size[:2]
+    shape = ImageOps.contain(Image.fromarray(empty_img), (TARGET_SIZE)).size[
+        :2
+    ]
 
     headers = [""] + hip_datas.metrics[0].names()
     values = []

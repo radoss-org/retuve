@@ -211,7 +211,7 @@ def bad_coverage(hip: HipDataUS) -> bool:
     """
 
     if (
-        hip.get_metric(MetricUS.COVERAGE) <= 0
+        hip.get_metric(MetricUS.COVERAGE) < 0
         or hip.get_metric(MetricUS.COVERAGE) > 0.9
     ):
         return True

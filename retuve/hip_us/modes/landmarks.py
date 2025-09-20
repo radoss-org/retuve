@@ -19,6 +19,8 @@ All code relating to going from measured landmarks to metrics is in this file.
 import time
 from typing import List, Tuple
 
+import numpy as np
+
 from retuve.classes.metrics import Metric2D
 from retuve.hip_us.classes.general import HipDatasUS, HipDataUS, LandmarksUS
 from retuve.hip_us.metrics.alpha import find_alpha_angle
@@ -27,6 +29,68 @@ from retuve.hip_us.metrics.curvature import find_curvature
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import MetricUS
 from retuve.logs import log_timings
+
+
+def _polyfit_replace_apex(
+    list_landmarks: List[LandmarksUS], degree: int = 2, max_pixel_err: float = 8.0
+) -> None:
+    """
+    Replace apex outliers using a simple polyfit across frames (time as z).
+
+    Fits a polynomial separately for x(t) and y(t) over frames with valid apex,
+    then replaces any apex whose distance to the fit exceeds max_pixel_err.
+
+    This function mutates list_landmarks in-place and keeps things simple:
+    - ignores frames with missing apex
+    - does not attempt to in-fill missing apex
+    - guards for small sample sizes
+    """
+    # Collect indices and apex coords where available
+    idxs = []
+    xs = []
+    ys = []
+    for i, lm in enumerate(list_landmarks):
+        if lm and lm.apex is not None:
+            x, y = lm.apex
+            if x is None or y is None:
+                continue
+            idxs.append(i)
+            xs.append(float(x))
+            ys.append(float(y))
+
+    # Need enough points to fit the requested degree
+    if len(idxs) < max(degree + 1, 3):
+        return
+
+    t = np.array(idxs, dtype=float)
+    x_arr = np.array(xs, dtype=float)
+    y_arr = np.array(ys, dtype=float)
+
+    # Fit polynomials x(t), y(t)
+    try:
+        px = np.poly1d(np.polyfit(t, x_arr, deg=degree))
+        py = np.poly1d(np.polyfit(t, y_arr, deg=degree))
+    except Exception:
+        # Be conservative: if fit fails, do nothing
+        return
+
+    # Replace outliers
+    for i, x_true, y_true in zip(idxs, x_arr, y_arr):
+        x_fit = float(px(i))
+        y_fit = float(py(i))
+        # Euclidean residual in pixels
+        resid = ((x_true - x_fit) ** 2 + (y_true - y_fit) ** 2) ** 0.5
+        if resid > max_pixel_err:
+            # Replace with rounded ints to match tuple[int, int]
+            lm = list_landmarks[i]
+            list_landmarks[i] = LandmarksUS(
+                left=lm.left,
+                right=lm.right,
+                apex=(int(round(x_fit)), int(round(y_fit))),
+                point_D=lm.point_D,
+                point_d=lm.point_d,
+                mid_cov_point=lm.mid_cov_point,
+            )
 
 
 def landmarks_2_metrics_us(
@@ -45,6 +109,10 @@ def landmarks_2_metrics_us(
     """
     hips = HipDatasUS()
     timings = []
+
+    # Simple 3D polyfit-based outlier cleanup for apex points across frames
+    # Runs conservatively and only replaces clear outliers; keeps behavior simple
+    _polyfit_replace_apex(list_landmarks)
 
     for frame_no, landmarks in enumerate(list_landmarks):
         start = time.time()

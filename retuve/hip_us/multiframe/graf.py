@@ -164,13 +164,13 @@ def graf_frame_algo(
     :return: Weighted score based on alpha and flatness.
     """
 
-    alpha_weight = 0.8  # Largest Alpha Angle
-    line_flatness_weight = 2.3  # Flatness of illium
-    os_ishium_weight = 5.4  # Os Ichium Area
-    femoral_head_weight = 12.3  # Femoral Head Area
-    apex_right_distance_weight = 13.5  # Distance between apex and right
-    femoral_head_roundness_weight = 2.7  # Roundness of femoral head
-    graf_frame_position_weight = 9.2  # Position of the frame in the illium
+    alpha_weight = 5.6  # Largest Alpha Angle
+    line_flatness_weight = 4.71  # Flatness of illium
+    os_ishium_weight = 14.51  # Os Ichium Area
+    femoral_head_weight = 12.81  # Femoral Head Area
+    apex_right_distance_weight = 0.96  # Distance between apex and right
+    femoral_head_roundness_weight = 1.42  # Roundness of femoral head
+    graf_frame_position_weight = 0.16  # Position of the frame in the illium
 
     hip_data, seg_frame_objs = hip_zipped_data
 
