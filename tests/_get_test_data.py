@@ -70,7 +70,7 @@ Please type "yes" to confirm that you have read and agree to the terms of the CC
 """
 )
 
-if os.environ.get("RETUVE_DISABLE_WARNING").lower() != "True":
+if os.environ.get("RETUVE_DISABLE_WARNING").lower() != "true":
     user_input = input(
         "Do you agree to the terms of the CC BY-NC-SA 3.0 license? (Type 'yes' to continue): "
     )

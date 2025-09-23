@@ -31,7 +31,7 @@ def download_case(*args, disable_warning=False, **kwargs):
     """
 
     # identify if running inside pytest
-    if os.environ.get("RETUVE_DISABLE_WARNING") == "True":
+    if os.environ.get("RETUVE_DISABLE_WARNING").lower() == "true":
         disable_warning = True
 
     if disable_warning:
