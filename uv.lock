@@ -2360,7 +2360,7 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-dev-dependencies = [
+dev = [
     { name = "black" },
     { name = "licensecheck" },
     { name = "pdoc" },
@@ -2399,7 +2399,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev-dependencies = [
+dev = [
     { name = "black", specifier = ">=23.0.0" },
     { name = "licensecheck", specifier = ">=3.0.0" },
     { name = "pdoc", specifier = ">=14.0.0" },
