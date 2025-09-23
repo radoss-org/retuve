@@ -82,7 +82,17 @@ def find_tonnis(landmarks: LandmarksXRay) -> tuple[int, int]:
             landmarks.pel_l_i,
             landmarks.pel_r_i,
             landmarks.pel_r_o,
+            landmarks.fem_l,
+            landmarks.fem_r,
         ]
+    ):
+        return 0, 0
+
+    if np.any(
+        (
+            landmarks.fem_l == landmarks.pel_l_i,
+            landmarks.fem_r == landmarks.pel_r_i,
+        )
     ):
         return 0, 0
 
@@ -122,10 +132,14 @@ def _draw_tonnis_side(overlay, pel_o, h_line_p1, h_line_p2, grade_text):
     pel_o_original = pel_o
     pel_o = (pel_o[0] - h_line_vec[0], pel_o[1] - h_line_vec[1])
 
-    sma_line_to_draw = extend_line(pel_o, sma_line_p2, scale=1.3, direction="both")
+    sma_line_to_draw = extend_line(
+        pel_o, sma_line_p2, scale=1.3, direction="both"
+    )
 
     overlay.draw_lines([sma_line_to_draw], color_override=Colors.LIGHT_GREEN)
-    overlay.draw_text(grade_text, pel_o_original[0] - 100, pel_o_original[1] - 125)
+    overlay.draw_text(
+        grade_text, pel_o_original[0] - 100, pel_o_original[1] - 125
+    )
 
 
 def draw_tonnis(hip: HipDataXray, overlay: Overlay, config: Config):
@@ -148,6 +162,14 @@ def draw_tonnis(hip: HipDataXray, overlay: Overlay, config: Config):
             landmarks.pel_r_i,
             landmarks.pel_r_o,
         ]
+    ):
+        return overlay
+
+    if np.any(
+        (
+            landmarks.fem_l == landmarks.pel_l_i,
+            landmarks.fem_r == landmarks.pel_r_i,
+        )
     ):
         return overlay
 

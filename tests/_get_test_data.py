@@ -40,6 +40,11 @@ from retuve.funcs import (
     analyse_hip_xray_2D,
 )
 from retuve.testdata import Cases, download_case
+from retuve.defaults.hip_configs import (
+    test_default_US_custom,
+    test_default_xray_custom,
+    test_default_3DUS_custom,
+)
 
 # DISCLAIMER
 # =======================
@@ -65,7 +70,7 @@ Please type "yes" to confirm that you have read and agree to the terms of the CC
 """
 )
 
-if os.environ.get("RETUVE_DISABLE_WARNING") != "True":
+if os.environ.get("RETUVE_DISABLE_WARNING").lower() != "True":
     user_input = input(
         "Do you agree to the terms of the CC BY-NC-SA 3.0 license? (Type 'yes' to continue): "
     )
@@ -76,7 +81,9 @@ if user_input.lower() != "yes":
     print("You did not agree to the terms. Exiting...")
     exit()
 
-print("Thank you for agreeing to the terms. Proceeding with the test generation...")
+print(
+    "Thank you for agreeing to the terms. Proceeding with the test generation..."
+)
 
 # remove if exists and create test-data dir
 if os.path.exists("./tests/test-data"):
@@ -175,7 +182,9 @@ visual_3d.write_html(f"{test_data_dir}/visual_3d_us.html")
 
 
 # Example usage
-img_file, labels_json = download_case(Cases.XRAY_JPG, directory="./tests/test-data")
+img_file, labels_json = download_case(
+    Cases.XRAY_JPG, directory="./tests/test-data"
+)
 
 img_raw = Image.open(img_file)
 labels = json.load(open(labels_json))
@@ -241,35 +250,9 @@ json_file_us = hip_data.json_dump(test_default_US, dev_metrics)
 # ------------------------------------------------------------------------------
 
 
-# Simple per-frame metric for US (count seg objects) and post-draw hook that
-# draws the count on the Graf frame for visibility and determinism.
-def _seg_object_count(hip, seg_frame_objs, config):
-    try:
-        return float(len(seg_frame_objs)), None
-    except Exception:
-        return 0.0, None
-
-
-def _draw_us_seg_count_on_graf(hip, overlay, config):
-    try:
-        if getattr(hip, "side", None) == Side.GRAF:
-            count = hip.get_metric("seg object count") or 0
-            overlay.draw_text(f"count: {int(count)}", 20, 20, header="h2", grafs=True)
-    except Exception:
-        pass
-    return overlay
-
-
-# 2DUS with custom metric and drawing
-cfg_us_custom = test_default_US.get_copy()
-cfg_us_custom.hip.per_frame_metric_functions = [("seg object count", _seg_object_count)]
-cfg_us_custom.hip.post_draw_functions = [
-    ("us seg count on graf", _draw_us_seg_count_on_graf)
-]
-
 hip_custom, img_custom, dev_custom = analyse_hip_2DUS(
     img=images[FRAME],
-    keyphrase=cfg_us_custom,
+    keyphrase=test_default_US_custom,
     modes_func=manual_predict_us,
     modes_func_kwargs_dict={"seg": seg_file, "seg_idx": FRAME},
 )
@@ -288,12 +271,9 @@ def _draw_xray_custom(hip, overlay, config):
     return overlay
 
 
-cfg_xray_custom = default_xray.get_copy()
-cfg_xray_custom.hip.post_draw_functions = [("xray custom", _draw_xray_custom)]
-
 hip_xc, img_xc, dev_xc = analyse_hip_xray_2D(
     img_raw,
-    keyphrase=cfg_xray_custom,
+    keyphrase=test_default_xray_custom,
     modes_func=manual_predict_xray,
     modes_func_kwargs_dict=labels,
 )
@@ -302,6 +282,27 @@ img_xc.save(f"{test_data_dir}/img_xray_custom.jpg")
 
 
 # ==============================================================================
+
+# 3DUS custom: generate a graf-frame image using the custom config
+
+hip_c3d, video_c3d, visual3d_c3d, dev_c3d = analyse_hip_3DUS(
+    dcm,
+    keyphrase=test_default_3DUS_custom,
+    modes_func=manual_predict_us_dcm,
+    modes_func_kwargs_dict={"seg": seg_file},
+)
+
+# Extract and save the Graf frame from the generated video
+try:
+    graf_idx = getattr(hip_c3d, "graf_frame", None)
+    if graf_idx is not None:
+        # Iterate frames to the Graf index and save that frame
+        for i, frame in enumerate(video_c3d.iter_frames(dtype="uint8")):
+            if i == graf_idx:
+                Image.fromarray(frame).save(f"{test_data_dir}/img_3dus_custom.jpg")
+                break
+except Exception:
+    pass
 
 
 def load_previous_release_note():
@@ -346,7 +347,9 @@ def mark_changes(new_data, old_data, path=""):
         for key in new_data.keys():
             full_path = f"{path}.{key}" if path else key
             if key in old_data:
-                new_data[key] = mark_changes(new_data[key], old_data[key], full_path)
+                new_data[key] = mark_changes(
+                    new_data[key], old_data[key], full_path
+                )
             else:
                 # Key is new, mark it as added
                 new_data[key] = f"{new_data[key]}  # Added"
@@ -354,7 +357,9 @@ def mark_changes(new_data, old_data, path=""):
         # Compare lists by index
         for i in range(len(new_data)):
             if i < len(old_data):
-                new_data[i] = mark_changes(new_data[i], old_data[i], f"{path}[{i}]")
+                new_data[i] = mark_changes(
+                    new_data[i], old_data[i], f"{path}[{i}]"
+                )
             else:
                 # Item is new in the list
                 new_data[i] = f"{new_data[i]}  # Added"
@@ -410,7 +415,9 @@ if previous_data is None or has_changes(
     with open(new_filename, "r") as f:
         content = f.read()
         content = content.replace("'", "")
-        content = content.replace("recorded_error:   # Modified", "recorded_error: ''")
+        content = content.replace(
+            "recorded_error:   # Modified", "recorded_error: ''"
+        )
     with open(new_filename, "w") as f:
         f.write(content)
 

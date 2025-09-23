@@ -48,8 +48,8 @@ current_output:
     - wiberg_index_right: 0
     - ihdi_grade_left: 0
     - ihdi_grade_right: 0
-    - tonnis_grade_left: 2
-    - tonnis_grade_right: 2
+    - tonnis_grade_left: 0  # Modified
+    - tonnis_grade_right: 0  # Modified
     keyphrase: default_xray
     dev_metrics: {}
   us_sweep:

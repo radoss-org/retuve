@@ -53,7 +53,9 @@ def draw_landmarks(
         if landmark is None:
             continue
 
-        overlay.draw_cross(landmark, override_line_thickness=override_line_thickness)
+        overlay.draw_cross(
+            landmark, override_line_thickness=override_line_thickness
+        )
 
     return overlay
 

@@ -247,6 +247,14 @@ def img_xray_custom_np() -> np.ndarray:
     return np.array(Image.open(path))
 
 
+@pytest.fixture
+def img_3dus_custom_np() -> np.ndarray:
+    """Load the 3DUS Graf-frame image with custom post-draw annot (numpy array)."""
+    path = "tests/test-data/img_3dus_custom.jpg"
+    assert os.path.exists(path), "Custom 3DUS image not found. Run `poe testgen`."
+    return np.array(Image.open(path))
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--capture-errors",
