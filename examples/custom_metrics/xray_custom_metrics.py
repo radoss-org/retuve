@@ -63,9 +63,7 @@ def draw_xray_count(hip, overlay, config):
 # --- Build a custom config --------------------------------------------------
 
 custom_xray = default_xray.get_copy()
-custom_xray.hip.per_frame_metric_functions = [
-    ("landmark count", landmark_count_metric)
-]
+custom_xray.hip.per_frame_metric_functions = [("landmark count", landmark_count_metric)]
 custom_xray.hip.post_draw_functions = [("xray count", draw_xray_count)]
 
 

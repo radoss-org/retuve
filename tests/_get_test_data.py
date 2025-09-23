@@ -81,9 +81,7 @@ if user_input.lower() != "yes":
     print("You did not agree to the terms. Exiting...")
     exit()
 
-print(
-    "Thank you for agreeing to the terms. Proceeding with the test generation..."
-)
+print("Thank you for agreeing to the terms. Proceeding with the test generation...")
 
 # remove if exists and create test-data dir
 if os.path.exists("./tests/test-data"):
@@ -182,9 +180,7 @@ visual_3d.write_html(f"{test_data_dir}/visual_3d_us.html")
 
 
 # Example usage
-img_file, labels_json = download_case(
-    Cases.XRAY_JPG, directory="./tests/test-data"
-)
+img_file, labels_json = download_case(Cases.XRAY_JPG, directory="./tests/test-data")
 
 img_raw = Image.open(img_file)
 labels = json.load(open(labels_json))
@@ -347,9 +343,7 @@ def mark_changes(new_data, old_data, path=""):
         for key in new_data.keys():
             full_path = f"{path}.{key}" if path else key
             if key in old_data:
-                new_data[key] = mark_changes(
-                    new_data[key], old_data[key], full_path
-                )
+                new_data[key] = mark_changes(new_data[key], old_data[key], full_path)
             else:
                 # Key is new, mark it as added
                 new_data[key] = f"{new_data[key]}  # Added"
@@ -357,9 +351,7 @@ def mark_changes(new_data, old_data, path=""):
         # Compare lists by index
         for i in range(len(new_data)):
             if i < len(old_data):
-                new_data[i] = mark_changes(
-                    new_data[i], old_data[i], f"{path}[{i}]"
-                )
+                new_data[i] = mark_changes(new_data[i], old_data[i], f"{path}[{i}]")
             else:
                 # Item is new in the list
                 new_data[i] = f"{new_data[i]}  # Added"
@@ -415,9 +407,7 @@ if previous_data is None or has_changes(
     with open(new_filename, "r") as f:
         content = f.read()
         content = content.replace("'", "")
-        content = content.replace(
-            "recorded_error:   # Modified", "recorded_error: ''"
-        )
+        content = content.replace("recorded_error:   # Modified", "recorded_error: ''")
     with open(new_filename, "w") as f:
         f.write(content)
 

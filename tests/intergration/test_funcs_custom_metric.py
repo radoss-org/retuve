@@ -124,9 +124,7 @@ def test_generated_custom_draw_3dus_matches_fixture(us_file_path, img_3dus_custo
             extracted = frame
             break
 
-    assert (
-        extracted is not None
-    ), "Failed to extract Graf frame from video clip."
+    assert extracted is not None, "Failed to extract Graf frame from video clip."
     extracted_np = np.array(extracted)
 
     assert extracted_np.shape == img_3dus_custom_np.shape
