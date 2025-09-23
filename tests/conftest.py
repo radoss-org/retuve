@@ -48,7 +48,7 @@ default_US.register("ultrasound", live=True)
 
 @pytest.fixture(scope="session", autouse=True)
 def set_env():
-    os.environ["RETUVE_DISABLE_WARNING"].lower() = "true"
+    os.environ["RETUVE_DISABLE_WARNING"] = "true"
 
 
 # check if test-data exists, otherwise print a message
