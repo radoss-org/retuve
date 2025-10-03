@@ -153,12 +153,16 @@ class Overlay:
             if not seg_obj.empty:
                 draw.polygon(
                     seg_obj.points,
-                    fill=LabelColours.get_color_from_index(seg_obj.cls.value + 1),
+                    fill=LabelColours.get_color_from_index(
+                        seg_obj.cls.value + 1
+                    ),
                 )
 
         return seg_overlay
 
-    def draw_cross(self, point: Tuple[int, int], override_line_thickness: int = None):
+    def draw_cross(
+        self, point: Tuple[int, int], override_line_thickness: int = None
+    ):
         """
         Draws a cross of a given radius at a specified point on the overlay.
 
@@ -173,13 +177,15 @@ class Overlay:
             DrawTypes.POINTS,
             (x - radius, y, x + radius, y),
             fill=color,
-            width=override_line_thickness or self.config.visuals.line_thickness,
+            width=override_line_thickness
+            or self.config.visuals.line_thickness,
         )
         self.add_operation(
             DrawTypes.POINTS,
             (x, y - radius, x, y + radius),
             fill=color,
-            width=override_line_thickness or self.config.visuals.line_thickness,
+            width=override_line_thickness
+            or self.config.visuals.line_thickness,
         )
 
     def draw_segmentation(self, points: List[Tuple[int, int]]):
@@ -192,7 +198,9 @@ class Overlay:
         self.add_operation(
             DrawTypes.SEGS,
             points,
-            fill=self.config.visuals.seg_color.rgba(self.config.visuals.seg_alpha),
+            fill=self.config.visuals.seg_color.rgba(
+                self.config.visuals.seg_alpha
+            ),
         )
 
     def draw_box(self, box: Tuple[int, int, int, int], grafs: bool = False):
@@ -227,67 +235,16 @@ class Overlay:
 
         :param skel: List of points to draw the skeleton.
         """
-        # Always record SKEL points for visibility and tests
-        for point in skel:
-            y, x = point
+        # If polynomial fitting fails, fall back to connecting original points with lines
+        for i in range(len(skel) - 1):
+            y1, x1 = skel[i]
+            y2, x2 = skel[i + 1]
             self.add_operation(
-                DrawTypes.SKEL,
-                (x, y),
+                DrawTypes.LINES,
+                [(x1, y1), (x2, y2)],
                 fill=self.config.hip.midline_color.rgba(),
+                width=3,
             )
-
-        if len(skel) < 2:
-            return
-
-        # Convert points to numpy arrays for easier manipulation
-        points = np.array(skel)
-        y_coords = points[:, 0]
-        x_coords = points[:, 1]
-
-        # Sort points by x-coordinate to ensure proper polynomial fitting
-        sorted_indices = np.argsort(x_coords)
-        x_sorted = x_coords[sorted_indices]
-        y_sorted = y_coords[sorted_indices]
-
-        try:
-            # Fit polynomial
-            coeffs = np.polyfit(x_sorted, y_sorted, POLY_DEGREE)
-            poly_func = np.poly1d(coeffs)
-
-            # Generate smooth points along the curve
-            x_min, x_max = x_sorted[0], x_sorted[-1]
-            # Create more points for smoother line (adjust density as needed)
-            num_points = max(50, len(skel) * 3)
-            x_smooth = np.linspace(x_min, x_max, num_points)
-            y_smooth = poly_func(x_smooth)
-
-            # Convert back to integer coordinates and draw lines between consecutive points
-            prev_point = None
-            for i in range(len(x_smooth)):
-                current_point = (int(x_smooth[i]), int(y_smooth[i]))
-
-                if prev_point is not None:
-                    # Draw line segment with thickness
-                    self.add_operation(
-                        DrawTypes.LINES,
-                        [prev_point, current_point],
-                        fill=self.config.hip.midline_color.rgba(),
-                        width=3,  # Adjust thickness as needed
-                    )
-
-                prev_point = current_point
-
-        except (np.linalg.LinAlgError, np.RankWarning):
-            # If polynomial fitting fails, fall back to connecting original points with lines
-            for i in range(len(skel) - 1):
-                y1, x1 = skel[i]
-                y2, x2 = skel[i + 1]
-                self.add_operation(
-                    DrawTypes.LINES,
-                    [(x1, y1), (x2, y2)],
-                    fill=self.config.hip.midline_color.rgba(),
-                    width=3,
-                )
 
     def draw_lines(
         self,

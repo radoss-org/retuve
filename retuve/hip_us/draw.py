@@ -26,7 +26,6 @@ import numpy as np
 from attr import has
 from PIL import Image, ImageOps
 from radstract.data.nifti import NIFTI, convert_images_to_nifti_labels
-
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegFrameObjects
 from retuve.draw import (
@@ -59,7 +58,9 @@ def draw_fem_head(
     :return: The Drawn Overlay
     """
     # Get radius at z
-    radius = circle_radius_at_z(fem_sph.radius, fem_sph.center[2], z_gap * hip.frame_no)
+    radius = circle_radius_at_z(
+        fem_sph.radius, fem_sph.center[2], z_gap * hip.frame_no
+    )
 
     # draw the circle
     overlay.draw_circle((fem_sph.center[0], fem_sph.center[1]), radius)
@@ -95,7 +96,9 @@ def draw_hips_us(
             hip, seg_frame_objs
         )
 
-        overlay = Overlay((final_image.shape[0], final_image.shape[1], 3), config)
+        overlay = Overlay(
+            (final_image.shape[0], final_image.shape[1], 3), config
+        )
 
         overlay = draw_seg(final_seg_frame_objs, overlay, config)
 
@@ -137,7 +140,7 @@ def draw_hips_us(
             for pdf in post_draw_funcs
         ]:
             try:
-                out = func(final_hip, overlay, config)
+                out = func(final_hip, seg_frame_objs, overlay, config)
                 if isinstance(out, Overlay):
                     overlay = out
             except Exception as e:
@@ -292,7 +295,9 @@ def draw_table(shape: tuple, hip_datas: HipDatasUS) -> np.ndarray:
     empty_img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
 
     # Find new shape by running 1024 algo
-    shape = ImageOps.contain(Image.fromarray(empty_img), (TARGET_SIZE)).size[:2]
+    shape = ImageOps.contain(Image.fromarray(empty_img), (TARGET_SIZE)).size[
+        :2
+    ]
 
     headers = [""] + hip_datas.metrics[0].names()
     values = []
