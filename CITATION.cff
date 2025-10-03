@@ -1,62 +1,82 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
 cff-version: 1.2.0
-message: "If you use this software or its results, please cite the article below."
-title: "Retuve"
+title: Retuve
+message: >-
+  If you use this software or its results, please cite the
+  article below.
 type: software
 authors:
-  - family-names: "McArthur"
-    given-names: "Adam"
-    orcid: "https://orcid.org/0009-0001-1371-5289"
-  - family-names: "Wichuk"
-    given-names: "Stephanie"
-    orcid: "https://orcid.org/0000-0003-4170-1244"
-  - family-names: "Burnside"
-    given-names: "Stephen"
-  - family-names: "Kirby"
-    given-names: "Andrew"
-  - family-names: "Scammon"
-    given-names: "Alexander"
-  - family-names: "Sol"
-    given-names: "Damian"
-  - family-names: "Hareendranathan"
-    given-names: "Abhilash"
-    orcid: "https://orcid.org/0000-0001-6201-9258"
-  - family-names: "Jaremko"
-    given-names: "Jacob L."
-    orcid: "https://orcid.org/0000-0001-5314-2297"
-repository-code: "https://github.com/radoss-org/retuve"
-url: "https://github.com/radoss-org/retuve"
+  - family-names: McArthur
+    given-names: Adam
+    orcid: 'https://orcid.org/0009-0001-1371-5289'
+  - family-names: Wichuk
+    given-names: Stephanie
+    orcid: 'https://orcid.org/0000-0003-4170-1244'
+  - family-names: Burnside
+    given-names: Stephen
+  - family-names: Kirby
+    given-names: Andrew
+  - family-names: Scammon
+    given-names: Alexander
+  - family-names: Sol
+    given-names: Damian
+  - family-names: Hareendranathan
+    given-names: Abhilash
+    orcid: 'https://orcid.org/0000-0001-6201-9258'
+  - family-names: Jaremko
+    given-names: Jacob L.
+    orcid: 'https://orcid.org/0000-0001-5314-2297'
+identifiers:
+  - type: doi
+    value: 10.1016/j.simpa.2025.100791
+  - type: url
+    value: 'https://doi.org/10.1016/j.simpa.2025.100791'
+repository-code: 'https://github.com/radoss-org/retuve'
+url: >-
+  https://www.sciencedirect.com/science/article/pii/S266596382500051X
 abstract: >
-  Retuve is an open-source framework for multi-modality DDH analysis
-  (ultrasound and X-ray), providing datasets, pretrained models,
-  training code, and a Python API for segmentation and landmark-based
-  measurements (e.g., alpha angle, acetabular index).
+  Retuve is an open-source framework for multi-modality DDH
+  analysis (ultrasound and X-ray), providing datasets,
+  pretrained models, training code, and a Python API for
+  segmentation and landmark-based measurements (e.g., alpha
+  angle, acetabular index).
+keywords:
+  - hip dysplasia
+  - radiology
+  - ai
+  - open-source
+license: Apache-2.0
 preferred-citation:
   type: article
-  title: "Retuve: Automated multi-modality analysis of hip dysplasia with open source AI"
+  title: >-
+    Retuve: Automated multi-modality analysis of hip dysplasia with open source
+    AI
   authors:
-    - family-names: "McArthur"
-      given-names: "Adam"
-      orcid: "https://orcid.org/0009-0001-1371-5289"
-    - family-names: "Wichuk"
-      given-names: "Stephanie"
-      orcid: "https://orcid.org/0000-0003-4170-1244"
-    - family-names: "Burnside"
-      given-names: "Stephen"
-    - family-names: "Kirby"
-      given-names: "Andrew"
-    - family-names: "Scammon"
-      given-names: "Alexander"
-    - family-names: "Sol"
-      given-names: "Damian"
-    - family-names: "Hareendranathan"
-      given-names: "Abhilash"
-      orcid: "https://orcid.org/0000-0001-6201-9258"
-    - family-names: "Jaremko"
-      given-names: "Jacob L."
-      orcid: "https://orcid.org/0000-0001-5314-2297"
-  journal: "Software Impacts"
+    - family-names: McArthur
+      given-names: Adam
+      orcid: 'https://orcid.org/0009-0001-1371-5289'
+    - family-names: Wichuk
+      given-names: Stephanie
+      orcid: 'https://orcid.org/0000-0003-4170-1244'
+    - family-names: Burnside
+      given-names: Stephen
+    - family-names: Kirby
+      given-names: Andrew
+    - family-names: Scammon
+      given-names: Alexander
+    - family-names: Sol
+      given-names: Damian
+    - family-names: Hareendranathan
+      given-names: Abhilash
+      orcid: 'https://orcid.org/0000-0001-6201-9258'
+    - family-names: Jaremko
+      given-names: Jacob L.
+      orcid: 'https://orcid.org/0000-0001-5314-2297'
+  journal: Software Impacts
   year: 2025
-  doi: "10.1016/j.simpa.2025.100791"
-  issn: "2665-9638"
-  url: "https://www.sciencedirect.com/science/article/pii/S266596382500051X"
-  pages: "100791"
+  doi: 10.1016/j.simpa.2025.100791
+  issn: 2665-9638
+  url: 'https://www.sciencedirect.com/science/article/pii/S266596382500051X'
+  pages: '100791'
