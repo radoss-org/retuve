@@ -37,6 +37,10 @@ else:
     RETUVE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
+# Realistically long enough for any real-world x-ray image
+EXTENSION_LINE_LENGTH = 1000
+
+
 def register_config_dirs(config, other_dirs=[]):
     hippa_log_file_dir = os.path.dirname(config.api.hippa_logging_file)
     sql_path = os.path.dirname(config.api.db_path)
@@ -182,24 +186,59 @@ def point_above_below(p1, p2, p3):
 def point_left_right(p1: tuple, p2: tuple, p3: tuple) -> float:
     """
     Calculates if a point p3 is to the left or right of a line segment p1-p2.
-
     The function has specific behavior:
+
     1. If p3 is horizontally outside the segment, it returns the horizontal
-       distance to the nearest endpoint's x-coordinate.
+    distance to the nearest endpoint's x-coordinate.
     2. If p3 is horizontally within the segment, it returns the vertical
-       distance to the line, with the sign indicating left/right.
+    distance to the line, with the sign indicating left/right.
+
+    Note: This complex approach is needed instead of a simple cross product because:
+    - We need consistent left/right results regardless of p1/p2 order
+    - We want meaningful results for points near (but outside) the segment ends
+    - The extension creates a "tolerance zone" for practical applications like UI hit testing
 
     :param p1: The first point of the line segment (x1, y1).
     :param p2: The second point of the line segment (x2, y2).
     :param p3: The point to test (x3, y3).
     :return:
-        - A positive value for "left".
-        - A negative value for "right".
-        - Zero if the point is on the line.
+    - A positive value for "left".
+    - A negative value for "right".
+    - Zero if the point is on the line.
     """
     x1, y1 = p1
     x2, y2 = p2
     x3, y3 = p3
+
+    # Extend the line segment by 1000 pixels in both directions
+    if x1 == x2:
+        # Vertical line case - extend in y direction instead
+        if y2 > y1:
+            extended_y1 = y1 - EXTENSION_LINE_LENGTH
+            extended_y2 = y2 + EXTENSION_LINE_LENGTH
+        else:
+            extended_y1 = y1 + EXTENSION_LINE_LENGTH
+            extended_y2 = y2 - EXTENSION_LINE_LENGTH
+        extended_x1, extended_x2 = x1, x2
+    else:
+        # Calculate slope and extend in x direction
+        slope = (y2 - y1) / (x2 - x1)
+
+        # Extend leftward from the leftmost point
+        if x1 < x2:
+            extended_x1 = x1 - EXTENSION_LINE_LENGTH
+            extended_y1 = y1 - slope * EXTENSION_LINE_LENGTH
+            extended_x2 = x2 + EXTENSION_LINE_LENGTH
+            extended_y2 = y2 + slope * EXTENSION_LINE_LENGTH
+        else:
+            extended_x1 = x1 + EXTENSION_LINE_LENGTH
+            extended_y1 = y1 + slope * EXTENSION_LINE_LENGTH
+            extended_x2 = x2 - EXTENSION_LINE_LENGTH
+            extended_y2 = y2 - slope * EXTENSION_LINE_LENGTH
+
+    # Use extended points for the rest of the calculation
+    x1, y1 = extended_x1, extended_y1
+    x2, y2 = extended_x2, extended_y2
 
     # Part 1: Handle points outside the x-range of the segment p1-p2.
     min_x = min(x1, x2)

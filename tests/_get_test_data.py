@@ -27,6 +27,7 @@ from PIL import Image
 from radstract.data.dicom import convert_dicom_to_images
 
 from retuve.defaults.hip_configs import default_xray, test_default_US
+from retuve.hip_us.classes.enums import Side
 from retuve.defaults.manual_seg import (
     manual_predict_us,
     manual_predict_us_dcm,
@@ -39,6 +40,11 @@ from retuve.funcs import (
     analyse_hip_xray_2D,
 )
 from retuve.testdata import Cases, download_case
+from retuve.defaults.hip_configs import (
+    test_default_US_custom,
+    test_default_xray_custom,
+    test_default_3DUS_custom,
+)
 
 # DISCLAIMER
 # =======================
@@ -64,7 +70,7 @@ Please type "yes" to confirm that you have read and agree to the terms of the CC
 """
 )
 
-if os.environ.get("RETUVE_DISABLE_WARNING") != "True":
+if os.environ.get("RETUVE_DISABLE_WARNING").lower() != "true":
     user_input = input(
         "Do you agree to the terms of the CC BY-NC-SA 3.0 license? (Type 'yes' to continue): "
     )
@@ -235,7 +241,64 @@ img.save(f"{test_data_dir}/img_2dus.jpg")
 json_file_us = hip_data.json_dump(test_default_US, dev_metrics)
 
 
+# ------------------------------------------------------------------------------
+# Generate 2DUS and X-ray images with a custom post-draw overlay
+# ------------------------------------------------------------------------------
+
+
+hip_custom, img_custom, dev_custom = analyse_hip_2DUS(
+    img=images[FRAME],
+    keyphrase=test_default_US_custom,
+    modes_func=manual_predict_us,
+    modes_func_kwargs_dict={"seg": seg_file, "seg_idx": FRAME},
+)
+
+img_custom.save(f"{test_data_dir}/img_2dus_custom.jpg")
+
+
+# X-ray: add a post-draw hook that writes a simple, deterministic label.
+def _draw_xray_custom(hip, overlay, config):
+    try:
+        val = hip.get_metric("ihdi") if hasattr(hip, "get_metric") else None
+        txt = f"custom: {val if val is not None else 0}"
+        overlay.draw_text(txt, 20, 20, header="h2")
+    except Exception:
+        pass
+    return overlay
+
+
+hip_xc, img_xc, dev_xc = analyse_hip_xray_2D(
+    img_raw,
+    keyphrase=test_default_xray_custom,
+    modes_func=manual_predict_xray,
+    modes_func_kwargs_dict=labels,
+)
+
+img_xc.save(f"{test_data_dir}/img_xray_custom.jpg")
+
+
 # ==============================================================================
+
+# 3DUS custom: generate a graf-frame image using the custom config
+
+hip_c3d, video_c3d, visual3d_c3d, dev_c3d = analyse_hip_3DUS(
+    dcm,
+    keyphrase=test_default_3DUS_custom,
+    modes_func=manual_predict_us_dcm,
+    modes_func_kwargs_dict={"seg": seg_file},
+)
+
+# Extract and save the Graf frame from the generated video
+try:
+    graf_idx = getattr(hip_c3d, "graf_frame", None)
+    if graf_idx is not None:
+        # Iterate frames to the Graf index and save that frame
+        for i, frame in enumerate(video_c3d.iter_frames(dtype="uint8")):
+            if i == graf_idx:
+                Image.fromarray(frame).save(f"{test_data_dir}/img_3dus_custom.jpg")
+                break
+except Exception:
+    pass
 
 
 def load_previous_release_note():

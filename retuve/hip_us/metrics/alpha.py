@@ -36,13 +36,13 @@ APEX_RIGHT_FACTOR = 0
 
 def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Config):
     if illium is None or illium.midline_moved is None:
-        return landmarks
+        return landmarks, 0
 
     # Get endpoints of main midline
     left_most, right_most = find_midline_extremes(illium.midline_moved)
 
     if left_most is None or right_most is None:
-        return landmarks
+        return landmarks, 0
 
     # Convert to NumPy arrays once
     left_most = np.array(left_most, dtype=float)
@@ -96,7 +96,7 @@ def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Conf
             append_result((min_dist, (py, px), (closest_point[1], closest_point[0])))
 
     if not results:
-        return landmarks
+        return landmarks, 0
 
     # Convert to NumPy for fast argmax
     results_arr = np.array(results, dtype=object)
@@ -109,7 +109,13 @@ def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Conf
     landmarks.left = (left_most[1], left_most[0])
     landmarks.right = (right_most[1], right_most[0])
 
-    return landmarks
+    angle = np.arctan2(
+        landmarks.apex[1] - landmarks.left[1],
+        landmarks.apex[0] - landmarks.left[0],
+    )
+    angle = np.degrees(angle)
+
+    return landmarks, angle
 
 
 @warning_decorator(alpha=True)

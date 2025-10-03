@@ -27,6 +27,9 @@ from retuve.classes.seg import SegFrameObjects
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Colors
 
+# No midline curve will ever be more complex than this
+POLY_DEGREE = 5
+
 
 class DrawTypes(Enum):
     """
@@ -150,12 +153,16 @@ class Overlay:
             if not seg_obj.empty:
                 draw.polygon(
                     seg_obj.points,
-                    fill=LabelColours.get_color_from_index(seg_obj.cls.value + 1),
+                    fill=LabelColours.get_color_from_index(
+                        seg_obj.cls.value + 1
+                    ),
                 )
 
         return seg_overlay
 
-    def draw_cross(self, point: Tuple[int, int], override_line_thickness: int = None):
+    def draw_cross(
+        self, point: Tuple[int, int], override_line_thickness: int = None
+    ):
         """
         Draws a cross of a given radius at a specified point on the overlay.
 
@@ -170,13 +177,15 @@ class Overlay:
             DrawTypes.POINTS,
             (x - radius, y, x + radius, y),
             fill=color,
-            width=override_line_thickness or self.config.visuals.line_thickness,
+            width=override_line_thickness
+            or self.config.visuals.line_thickness,
         )
         self.add_operation(
             DrawTypes.POINTS,
             (x, y - radius, x, y + radius),
             fill=color,
-            width=override_line_thickness or self.config.visuals.line_thickness,
+            width=override_line_thickness
+            or self.config.visuals.line_thickness,
         )
 
     def draw_segmentation(self, points: List[Tuple[int, int]]):
@@ -189,7 +198,9 @@ class Overlay:
         self.add_operation(
             DrawTypes.SEGS,
             points,
-            fill=self.config.visuals.seg_color.rgba(self.config.visuals.seg_alpha),
+            fill=self.config.visuals.seg_color.rgba(
+                self.config.visuals.seg_alpha
+            ),
         )
 
     def draw_box(self, box: Tuple[int, int, int, int], grafs: bool = False):
@@ -220,17 +231,19 @@ class Overlay:
 
     def draw_skeleton(self, skel: List[Tuple[int, int]]):
         """
-        Draws a skeleton on the overlay.
+        Draws a skeleton on the overlay using polyfit to create a smooth line.
 
         :param skel: List of points to draw the skeleton.
         """
-
-        for point in skel:
-            y, x = point
+        # If polynomial fitting fails, fall back to connecting original points with lines
+        for i in range(len(skel) - 1):
+            y1, x1 = skel[i]
+            y2, x2 = skel[i + 1]
             self.add_operation(
-                DrawTypes.SKEL,
-                (x, y),
+                DrawTypes.LINES,
+                [(x1, y1), (x2, y2)],
                 fill=self.config.hip.midline_color.rgba(),
+                width=3,
             )
 
     def draw_lines(

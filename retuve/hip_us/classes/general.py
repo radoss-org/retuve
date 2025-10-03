@@ -173,8 +173,12 @@ class HipDataUS:
                 "dev_metrics": dev_metrics.json_dump(),
             }
 
+        # Serialize Metric2D objects as strings for deterministic comparisons
+        serialized_metrics = [
+            {metric.name: metric.value} for metric in self.metrics
+        ]
         return {
-            "metrics": [{metric.name: metric.value} for metric in self.metrics],
+            "metrics": serialized_metrics,
             "keyphrase": config.name,
             "dev_metrics": dev_metrics.json_dump(),
         }
@@ -208,6 +212,8 @@ class HipDatasUS:
         self.graf_frame: int = None
         self.grafs_hip: HipDataUS = None
         self.dev_metrics: DevMetricsUS = None
+        # Temporary collector for custom dev metrics from full_metric_functions
+        self.dev_metrics_custom: Dict[str, object] = {}
         self.video_clip: ImageSequenceClip = None
         self.visual_3d: Figure = None
         self.nifti: NIFTI = None
@@ -256,10 +262,13 @@ class HipDatasUS:
         """
         return {
             "metrics": [
-                {metric.dump()[0]: metric.dump()[1:]} for metric in self.metrics
+                {metric.dump()[0]: metric.dump()[1:]}
+                for metric in self.metrics
             ],
             "graf_frame": self.graf_frame,
-            "dev_metrics": (self.dev_metrics.json_dump() if self.dev_metrics else None),
+            "dev_metrics": (
+                self.dev_metrics.json_dump() if self.dev_metrics else None
+            ),
             "recorded_error": str(self.recorded_error),
             "keyphrase": config.name,
         }

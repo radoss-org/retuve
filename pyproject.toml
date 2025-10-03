@@ -41,8 +41,8 @@ build-backend = "hatchling.build"
 # Specify the directory and filename for the coverage data
 data_file = "tests/.coverage"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "black>=23.0.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -65,7 +65,7 @@ deadcode = "vulture retuve ./scripts/whitelist.py"
 copiedcode = [{ cmd = "sudo npm install -g jscpd" }, { cmd = "jscpd retuve" }]
 linecount = [
     { cmd = "sudo apt install cloc" },
-    { cmd = "cloc ./retuve --exclude-dir=classes,keyphrases,defaults --not-match-f='classes.py'" },
+    { cmd = "cloc ./retuve --exclude-dir=classes,keyphrases,defaults,app,trak --not-match-f='classes.py'" },
 ]
 cuda = "python -c 'import torch; print(torch.cuda.is_available())'"
 pdoc_create = "pdoc -d numpy -o web retuve --logo https://files.mcaq.me/52kj1.png"

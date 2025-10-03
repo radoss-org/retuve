@@ -66,6 +66,24 @@ def get_side_metainfo(
     return closest_illium, mid
 
 
+def set_side_info(
+    hip_datas: HipDatasUS,
+    results: List[SegFrameObjects],
+    config,
+) -> Tuple[HipDatasUS, List[SegFrameObjects]]:
+    if config.hip.allow_flipping:
+        return reverse_3dus_orientaition(hip_datas, results, config.hip.allow_flipping)
+    for hip_data in hip_datas:
+        if hip_data.frame_no < hip_datas.graf_frame:
+            hip_data.side = Side.ANT
+        elif hip_data.frame_no == hip_datas.graf_frame:
+            hip_data.side = Side.GRAF
+        else:
+            hip_data.side = Side.POST
+
+    return hip_datas, results
+
+
 @warning_decorator(alpha=True)
 def reverse_3dus_orientaition(
     hip_datas: HipDatasUS,

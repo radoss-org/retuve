@@ -26,7 +26,6 @@ import numpy as np
 from attr import has
 from PIL import Image, ImageOps
 from radstract.data.nifti import NIFTI, convert_images_to_nifti_labels
-
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegFrameObjects
 from retuve.draw import (
@@ -40,7 +39,6 @@ from retuve.hip_us.classes.general import HipDatasUS, HipDataUS
 from retuve.hip_us.handlers.side import get_side_metainfo
 from retuve.hip_us.metrics.alpha import draw_alpha
 from retuve.hip_us.metrics.coverage import draw_coverage
-from retuve.hip_us.metrics.curvature import draw_curvature
 from retuve.hip_us.multiframe import FemSphere
 from retuve.hip_us.multiframe.models import circle_radius_at_z
 from retuve.keyphrases.config import Config
@@ -60,7 +58,9 @@ def draw_fem_head(
     :return: The Drawn Overlay
     """
     # Get radius at z
-    radius = circle_radius_at_z(fem_sph.radius, fem_sph.center[2], z_gap * hip.frame_no)
+    radius = circle_radius_at_z(
+        fem_sph.radius, fem_sph.center[2], z_gap * hip.frame_no
+    )
 
     # draw the circle
     overlay.draw_circle((fem_sph.center[0], fem_sph.center[1]), radius)
@@ -96,7 +96,9 @@ def draw_hips_us(
             hip, seg_frame_objs
         )
 
-        overlay = Overlay((final_image.shape[0], final_image.shape[1], 3), config)
+        overlay = Overlay(
+            (final_image.shape[0], final_image.shape[1], 3), config
+        )
 
         overlay = draw_seg(final_seg_frame_objs, overlay, config)
 
@@ -104,7 +106,6 @@ def draw_hips_us(
 
         overlay = draw_alpha(final_hip, overlay, config)
         overlay = draw_coverage(final_hip, overlay, config)
-        overlay = draw_curvature(final_hip, overlay, config)
 
         if fem_sph and config.hip.display_fem_guess:
             overlay = draw_fem_head(
@@ -127,6 +128,25 @@ def draw_hips_us(
             config,
             graf_conf,
         )
+
+        # Run any custom post-draw hooks after base drawing (standard signature)
+        post_draw_funcs = getattr(config.hip, "post_draw_functions", []) or []
+        for name, func in [
+            (
+                (pdf[0], pdf[1])
+                if isinstance(pdf, tuple)
+                else (getattr(pdf, "__name__", None), pdf)
+            )
+            for pdf in post_draw_funcs
+        ]:
+            try:
+                out = func(final_hip, seg_frame_objs, overlay, config)
+                if isinstance(out, Overlay):
+                    overlay = out
+            except Exception as e:
+                ulogger.error(
+                    f"Post-draw function {getattr(func, '__name__', str(func))} failed: {e}"
+                )
 
         if config.hip.display_bad_frame_reasons and hasattr(
             hip_datas, "bad_frame_reasons"
@@ -245,9 +265,6 @@ def draw_other(
 
     if config.hip.draw_midline:
         for seg_obj in seg_frame_objs:
-            if seg_obj.midline is not None:
-                overlay.draw_skeleton(seg_obj.midline)
-
             if seg_obj.midline_moved is not None:
                 overlay.draw_skeleton(seg_obj.midline_moved)
 
@@ -278,7 +295,9 @@ def draw_table(shape: tuple, hip_datas: HipDatasUS) -> np.ndarray:
     empty_img = np.zeros((shape[1], shape[0], 3), dtype=np.uint8)
 
     # Find new shape by running 1024 algo
-    shape = ImageOps.contain(Image.fromarray(empty_img), (TARGET_SIZE)).size[:2]
+    shape = ImageOps.contain(Image.fromarray(empty_img), (TARGET_SIZE)).size[
+        :2
+    ]
 
     headers = [""] + hip_datas.metrics[0].names()
     values = []

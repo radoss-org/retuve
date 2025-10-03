@@ -23,6 +23,7 @@ from typing import List
 import cv2
 import numpy as np
 from filelock import FileLock
+
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.enums import HipLabelsUS
 from retuve.hip_us.classes.general import HipDatasUS
@@ -30,8 +31,6 @@ from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import GrafSelectionMethod, MetricUS
 from retuve.logs import ulogger
 from retuve.utils import warning_decorator
-
-DO_CALIBRATION = False
 
 
 def _get_left_apex_angle(hip) -> bool:
@@ -42,7 +41,11 @@ def _get_left_apex_angle(hip) -> bool:
 
     :return: Boolean indicating if the left apex line is flat.
     """
-    if hip.landmarks is None:
+    if (
+        hip.landmarks is None
+        or hip.landmarks.left is None
+        or hip.landmarks.apex is None
+    ):
         return True
 
     C, A, B = (
@@ -56,6 +59,10 @@ def _get_left_apex_angle(hip) -> bool:
 
     angle = np.arccos((a**2 + b**2 - np.linalg.norm(A - B) ** 2) / (2 * a * b))
     angle = np.degrees(angle)
+
+    # if angle is nan, return 0
+    if np.isnan(angle):
+        return 0
 
     return int(angle)
 
@@ -85,7 +92,7 @@ def _get_femoral_head_area(seg_frame_objs) -> float:
 
 def _get_apex_right_distance(hip) -> float:
     apex_right_distance = 0
-    if hip.landmarks:
+    if hip.landmarks and hip.landmarks.apex and hip.landmarks.right:
         apex_right_distance = abs(hip.landmarks.apex[1] - hip.landmarks.right[1])
 
     return apex_right_distance
@@ -221,7 +228,8 @@ def graf_frame_algo(
         2,
     )
 
-    if file_id and DO_CALIBRATION:
+    # This is an experimental feature with no support
+    if file_id and getattr(config, "do_calibration", False):
         data = {
             "alpha_value": alpha_value,
             "line_flatness_value": line_flatness_value,
@@ -233,7 +241,7 @@ def graf_frame_algo(
         }
 
         # Create folder for the JSON file
-        json_folder = f"./scripts/val/cali/"
+        json_folder = config.api.savedir + "/calibration-data"
         os.makedirs(json_folder, exist_ok=True)
 
         # Define the path to the JSON file and the lock file

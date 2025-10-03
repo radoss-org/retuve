@@ -17,7 +17,6 @@ Default Configs for Each Subconfig in the Keyphrases Module.
 """
 
 from radstract.data.dicom import DicomTypes
-
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import (
     ACASplit,
@@ -72,7 +71,6 @@ hip = HipConfig(
     measurements=[
         MetricUS.ALPHA,
         MetricUS.COVERAGE,
-        # MetricUS.CURVATURE,
         # MetricUS.CENTERING_RATIO,
         # MetricUS.ACA,
     ],
@@ -92,6 +90,12 @@ hip = HipConfig(
     graf_frame_selection=None,
     allow_irregular_illiums=False,
     allow_horizontal_flipping=False,
+    full_metric_functions=[],
+    seg_preprocess_functions=[],
+    per_frame_metric_functions=[],
+    post_draw_functions=[],
+    use_polyfit_replace_apex=False,
+    count_0_coverage_as_error=False,
 )
 
 trak = TrakConfig(

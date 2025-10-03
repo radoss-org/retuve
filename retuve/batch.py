@@ -91,7 +91,9 @@ def run_single(
             retuve_result.image.save(f"{savedir}/{fileid}{Outputs.IMAGE}")
 
         if retuve_result.metrics and retuve_result.metrics.get("dev_metrics"):
-            ulogger.info("\n Dev Metrics: ", retuve_result.metrics["dev_metrics"])
+            ulogger.info(
+                "\n Dev Metrics: ", retuve_result.metrics["dev_metrics"]
+            )
 
         if retuve_result.video_clip is not None:
             retuve_result.video_clip.write_videofile(
@@ -99,7 +101,12 @@ def run_single(
             )
 
         if retuve_result.visual_3d is not None:
-            retuve_result.visual_3d.write_html(f"{savedir}/{fileid}{Outputs.VISUAL3D}")
+            retuve_result.visual_3d.write_html(
+                f"{savedir}/{fileid}{Outputs.VISUAL3D}"
+            )
+
+        if config.seg_export and hip_datas and hip_datas.nifti is not None:
+            hip_datas.nifti.save(f"{savedir}/{fileid}{Outputs.NIFTI}")
 
         # save the metrics to a file
         with open(f"{savedir}/{fileid}{Outputs.METRICS}", "w") as f:
@@ -125,7 +132,10 @@ def run_batch(config: Config):
         files = [
             f"{dataset}/{file}"
             for file in files
-            if any(file.endswith(input_type) for input_type in config.batch.input_types)
+            if any(
+                file.endswith(input_type)
+                for input_type in config.batch.input_types
+            )
         ]
 
         all_files.extend(files)
@@ -145,7 +155,9 @@ def run_batch(config: Config):
 
     if any(error is not None for error in errors):
         already_processed = sum(
-            "already processed" in error for error in errors if error is not None
+            "already processed" in error
+            for error in errors
+            if error is not None
         )
         # count and remove all errors containing "already processed"
         errors = [
@@ -155,15 +167,15 @@ def run_batch(config: Config):
         ]
 
         for error in errors:
-            ulogger.info(error)
+            print(error)
 
-        ulogger.info(f"Errors: {len(errors)}")
-        ulogger.info(f"Already processed: {already_processed}")
+        print(f"Errors: {len(errors)}")
+        print(f"Already processed: {already_processed}")
 
     end = time.time()
 
     if len(all_files) == 0:
-        ulogger.info(
+        print(
             f"No files with types in {config.batch.input_types} "
             "found in the directory"
         )
@@ -171,16 +183,16 @@ def run_batch(config: Config):
 
     # convert to minutes and seconds
     minutes, seconds = divmod(end - start, 60)
-    ulogger.info(f"Time taken: {minutes:.0f}m {seconds:.0f}s")
+    print(f"Time taken: {minutes:.0f}m {seconds:.0f}s")
 
     # Half to ignore the .nii files
-    no_of_files = len(all_files) // 2
+    no_of_files = len(all_files)
 
     if no_of_files == 0:
         no_of_files = 1
 
     # Print average time per file
-    ulogger.info(f"Average time per file: {(end - start) / no_of_files:.2f}s")
+    print(f"Average time per file: {(end - start) / no_of_files:.2f}s")
 
     # Print number of files
-    ulogger.info(f"Number of files: {no_of_files}")
+    print(f"Number of files: {no_of_files}")

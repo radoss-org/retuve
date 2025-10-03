@@ -21,10 +21,12 @@ import time
 from typing import Any, BinaryIO, Callable, Dict, List, Tuple, Union
 
 import pydicom
+from moviepy import VideoFileClip
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 from PIL import Image
 from plotly.graph_objs import Figure
 from radstract.data.dicom import (
+    DicomTypes,
     convert_dicom_to_images,
     convert_images_to_dicom,
 )
@@ -37,7 +39,7 @@ from retuve.hip_us.classes.dev import DevMetricsUS
 from retuve.hip_us.classes.general import HipDatasUS, HipDataUS
 from retuve.hip_us.draw import draw_hips_us, draw_table
 from retuve.hip_us.handlers.bad_data import handle_bad_frames
-from retuve.hip_us.handlers.side import reverse_3dus_orientaition
+from retuve.hip_us.handlers.side import set_side_info
 from retuve.hip_us.metrics.dev import get_dev_metrics
 from retuve.hip_us.modes.landmarks import landmarks_2_metrics_us
 from retuve.hip_us.modes.seg import pre_process_segs_us, segs_2_landmarks_us
@@ -91,6 +93,32 @@ def process_landmarks_xray(
     :return: The hip datas and the image arrays.
     """
     hip_datas_xray = landmarks_2_metrics_xray(landmark_results, config)
+
+    # Run custom per-image metric functions (standardized signature)
+    per_frame_funcs = (
+        getattr(config.hip, "per_frame_metric_functions", []) or []
+    )
+    if per_frame_funcs:
+        for hip, seg_frame_objs in zip(hip_datas_xray, seg_results):
+            for pf_name, pf_func in [
+                (
+                    (pf[0], pf[1])
+                    if isinstance(pf, tuple)
+                    else (getattr(pf, "__name__", "custom"), pf)
+                )
+                for pf in per_frame_funcs
+            ]:
+                out = pf_func(hip, seg_frame_objs, config)
+                value, dev_extra = (None, None)
+                if isinstance(out, tuple) and len(out) == 2:
+                    value, dev_extra = out
+                else:
+                    value = out
+                if value is not None:
+                    if hip.metrics is None:
+                        hip.metrics = []
+                    hip.metrics.append(Metric2D(name=pf_name, value=value))
+
     image_arrays = draw_hips_xray(hip_datas_xray, seg_results, config)
     return hip_datas_xray, image_arrays
 
@@ -103,6 +131,7 @@ def process_segs_us(
         List[SegFrameObjects],
     ],
     modes_func_kwargs_dict: Dict[str, Any],
+    called_by_2dus: bool = False,
 ) -> Tuple[HipDatasUS, List[SegFrameObjects], Tuple[int, int, int]]:
     """
     Process the segmentation for the 3DUS.
@@ -111,17 +140,151 @@ def process_segs_us(
     :param file: The file.
     :param modes_func: The mode function.
     :param modes_func_kwargs_dict: The mode function kwargs.
+    :param called_by_2dus: Whether the calling was from the 2DUS function.
 
     :return: The hip datas, the results, and the shape.
     """
 
-    results: List[SegFrameObjects] = modes_func(file, config, **modes_func_kwargs_dict)
+    results: List[SegFrameObjects] = modes_func(
+        file, config, **modes_func_kwargs_dict
+    )
     results, shape = pre_process_segs_us(results, config)
+
+    # Run any custom segmentation pre-process hooks
+    for preprocess in (
+        getattr(config.hip, "seg_preprocess_functions", []) or []
+    ):
+        try:
+            name, func = (
+                preprocess
+                if isinstance(preprocess, tuple)
+                else (None, preprocess)
+            )
+            updated = None
+            # Try signatures: (results, config), (results,), (results, config, shape)
+            for args in [
+                (results, config),
+                (results,),
+                (results, config, shape),
+            ]:
+                try:
+                    updated = func(*args)
+                    break
+                except TypeError:
+                    continue
+            if updated is not None:
+                results = updated
+        except Exception as e:
+            ulogger.error(
+                f"Seg preprocess function {getattr(preprocess, '__name__', str(preprocess))} failed: {e}"
+            )
+
     pre_edited_results = copy.deepcopy(results)
-    landmarks, all_seg_rejection_reasons = segs_2_landmarks_us(results, config)
+    landmarks, all_seg_rejection_reasons, ilium_angle_baselines = (
+        segs_2_landmarks_us(results, config)
+    )
     pre_edited_landmarks = copy.deepcopy(landmarks)
     hip_datas = landmarks_2_metrics_us(landmarks, shape, config)
     hip_datas.all_seg_rejection_reasons = all_seg_rejection_reasons
+    hip_datas.ilium_angle_baselines = ilium_angle_baselines
+
+    # Initialize a container for any custom dev metrics returned by full_metric_functions
+    if (
+        not hasattr(hip_datas, "dev_metrics_custom")
+        or hip_datas.dev_metrics_custom is None
+    ):
+        hip_datas.dev_metrics_custom = {}
+
+    for metric_name, metric_func in config.hip.full_metric_functions:
+        value = 0
+        dev_extra = {}
+        # Try different call signatures: (hip_datas, results, config), (hip_datas, config), (hip_datas)
+        for args in [
+            (hip_datas, results, config),
+            (hip_datas, config),
+            (hip_datas,),
+        ]:
+            try:
+                result = metric_func(*args)
+                # Support multiple return shapes: scalar, (scalar, dict), dict-only
+                if (
+                    isinstance(result, tuple)
+                    and len(result) == 2
+                    and isinstance(result[1], dict)
+                ):
+                    value, dev_extra = result
+                elif isinstance(result, dict):
+                    dev_extra = result
+                    value = 0
+                else:
+                    value = result
+                break
+            except TypeError as e:
+                if "positional argument" in str(e):
+                    continue
+                raise e
+            except Exception:
+                value = 0
+                break
+
+        if getattr(hip_datas, "custom_metrics", None) is None:
+            hip_datas.custom_metrics = []
+
+        if not called_by_2dus:
+            custom_metric = Metric3D(name=metric_name, full=value)
+            hip_datas.custom_metrics.append(custom_metric)
+        else:
+            custom_metric = Metric2D(name=metric_name, value=value)
+            hip_datas.custom_metrics.append(custom_metric)
+
+        # Aggregate any custom dev metrics returned by this metric function
+        if dev_extra:
+            try:
+                # Group dev extras by the metric name for clarity
+                if metric_name not in hip_datas.dev_metrics_custom:
+                    hip_datas.dev_metrics_custom[metric_name] = {}
+                hip_datas.dev_metrics_custom[metric_name].update(dev_extra)
+            except Exception:
+                pass
+
+    # Run custom per-frame metrics functions, if any
+    per_frame_funcs = (
+        getattr(config.hip, "per_frame_metric_functions", []) or []
+    )
+    if per_frame_funcs:
+        try:
+            for hip, seg_frame_objs in zip(hip_datas, results):
+                for pf_name, pf_func in [
+                    (
+                        (pf[0], pf[1])
+                        if isinstance(pf, tuple)
+                        else (getattr(pf, "__name__", "custom"), pf)
+                    )
+                    for pf in per_frame_funcs
+                ]:
+                    out = pf_func(hip, seg_frame_objs, config)
+                    # Expect (value, dev_dict)
+                    value, dev_extra = (None, None)
+                    if isinstance(out, tuple) and len(out) == 2:
+                        value, dev_extra = out
+                    else:
+                        # Back-compat: allow single numeric
+                        value = out
+                    if value is not None:
+                        try:
+                            if hip.metrics is None:
+                                hip.metrics = []
+                            hip.metrics.append(
+                                Metric2D(name=pf_name, value=value)
+                            )
+                        except Exception:
+                            pass
+                    if isinstance(dev_extra, dict):
+                        hip_datas.dev_metrics_custom.setdefault(
+                            pf_name, []
+                        ).append(dev_extra)
+        except Exception as e:
+            ulogger.error(f"Per-frame metric functions failed: {e}")
 
     if config.test_data_passthrough:
         hip_datas.pre_edited_results = pre_edited_results
@@ -160,7 +323,9 @@ def analyse_hip_xray_2D(
     elif isinstance(img, Image.Image):
         data = [img]
     else:
-        raise ValueError(f"Invalid image type: {type(img)}. Expected Image or DICOM.")
+        raise ValueError(
+            f"Invalid image type: {type(img)}. Expected Image or DICOM."
+        )
 
     if config.operation_type in OperationType.LANDMARK:
         landmark_results, seg_results = modes_func(
@@ -270,7 +435,9 @@ def analyse_hip_3DUS(
         del modes_func_kwargs_dict["file_id"]
 
     # if a set of images, convert to a DICOM file
-    if isinstance(image, list) and all(isinstance(img, Image.Image) for img in image):
+    if isinstance(image, list) and all(
+        isinstance(img, Image.Image) for img in image
+    ):
         image = convert_images_to_dicom(image)
 
     try:
@@ -294,9 +461,7 @@ def analyse_hip_3DUS(
     hip_datas.file_id = file_id
     hip_datas = find_graf_plane(hip_datas, results, config=config)
 
-    hip_datas, results = reverse_3dus_orientaition(
-        hip_datas, results, config.hip.allow_flipping
-    )
+    hip_datas, results = set_side_info(hip_datas, results, config)
 
     (
         hip_datas,
@@ -316,8 +481,8 @@ def analyse_hip_3DUS(
 
     hip_datas = get_dev_metrics(hip_datas, results, config)
 
-    data_image = draw_table(shape, hip_datas)
-    image_arrays.append(data_image)
+    # data_image = draw_table(shape, hip_datas)
+    # image_arrays.append(data_image)
 
     ulogger.info(f"Total 3DUS time: {time.time() - start:.2f}s")
 
@@ -340,6 +505,9 @@ def analyse_hip_3DUS(
         hip_datas.femoral_sphere = femoral_sphere
         hip_datas.avg_normals_data = avg_normals_data
         hip_datas.normals_data = normals_data
+
+    if getattr(hip_datas, "custom_metrics", None) is not None:
+        hip_datas.metrics += hip_datas.custom_metrics
 
     return (
         hip_datas,
@@ -379,9 +547,14 @@ def analyse_hip_2DUS(
     try:
         if config.operation_type in OperationType.SEG:
             hip_datas, results, _ = process_segs_us(
-                config, data, modes_func, modes_func_kwargs_dict
+                config,
+                data,
+                modes_func,
+                modes_func_kwargs_dict,
+                called_by_2dus=True,
             )
     except Exception as e:
+        raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None
 
@@ -396,6 +569,9 @@ def analyse_hip_2DUS(
 
     if return_seg_info:
         hip.seg_info = results
+
+    if getattr(hip_datas, "custom_metrics", None) is not None:
+        hip.metrics += hip_datas.custom_metrics
 
     return hip, image, hip_datas.dev_metrics
 
@@ -429,13 +605,19 @@ def analyse_hip_2DUS_sweep(
     hip_datas = HipDatasUS()
 
     # if a set of images, convert to a DICOM file
-    if isinstance(image, list) and all(isinstance(img, Image.Image) for img in image):
+    if isinstance(image, list) and all(
+        isinstance(img, Image.Image) for img in image
+    ):
         image = convert_images_to_dicom(image)
 
     try:
         if config.operation_type == OperationType.SEG:
             hip_datas, results, shape = process_segs_us(
-                config, image, modes_func, modes_func_kwargs_dict
+                config,
+                image,
+                modes_func,
+                modes_func_kwargs_dict,
+                called_by_2dus=True,
             )
         elif config.operation_type == OperationType.LANDMARK:
             raise NotImplementedError(
@@ -475,6 +657,17 @@ def analyse_hip_2DUS_sweep(
             config.visuals.min_vid_length,
         ),
     )
+
+    if (
+        graf_hip is None
+        or graf_hip.metrics is None
+        and hip_datas.custom_metrics is not None
+    ):
+        graf_hip = hip_datas[0]
+        graf_hip.metrics = hip_datas.custom_metrics
+
+    elif getattr(hip_datas, "custom_metrics", None) is not None:
+        graf_hip.metrics += hip_datas.custom_metrics
 
     return graf_hip, graf_image, hip_datas.dev_metrics, video_clip
 
@@ -526,36 +719,55 @@ def retuve_run(
 
     :return: The Retuve result standardised output.
     """
+    org_file_name = file
     always_dcm = (
-        len(config.batch.input_types) == 1 and ".dcm" in config.batch.input_types
+        len(config.batch.input_types) == 1
+        and ".dcm" in config.batch.input_types
     )
 
-    if always_dcm or (file.endswith(".dcm") and ".dcm" in config.batch.input_types):
+    if always_dcm or (
+        file.endswith(".dcm") and ".dcm" in config.batch.input_types
+    ):
         file = pydicom.dcmread(file)
 
     if hip_mode == HipMode.XRAY:
         if not isinstance(file, pydicom.FileDataset):
-            file = Image.open(file)
+            file = Image.open(file).convert("RGB")
+
         hip, image, dev_metrics = analyse_hip_xray_2D(
             file, config, modes_func, modes_func_kwargs_dict
         )
-        return RetuveResult(hip.json_dump(config, dev_metrics), image=image, hip=hip)
+        return RetuveResult(
+            hip.json_dump(config, dev_metrics), image=image, hip=hip
+        )
     elif hip_mode == HipMode.US3D:
+        modes_func_kwargs_dict["file_id"] = org_file_name.split("/")[-1]
         hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
             file, config, modes_func, modes_func_kwargs_dict
         )
-        return RetuveResult(
-            hip_datas.json_dump(config),
-            hip_datas=hip_datas,
-            video_clip=video_clip,
-            visual_3d=visual_3d,
-        )
+        if hip_datas:
+            return RetuveResult(
+                hip_datas.json_dump(config),
+                hip_datas=hip_datas,
+                video_clip=video_clip,
+                visual_3d=visual_3d,
+            )
+        else:
+            return RetuveResult({})
     elif hip_mode == HipMode.US2D:
-        file = Image.open(file).convert("RGB")
+        if not isinstance(file, pydicom.FileDataset):
+            file = Image.open(file).convert("RGB")
+        else:
+            file = convert_dicom_to_images(file, dicom_type=DicomTypes.SINGLE)[
+                0
+            ].convert("RGB")
+
         hip, image, dev_metrics = analyse_hip_2DUS(
             file, config, modes_func, modes_func_kwargs_dict
         )
-        return RetuveResult(hip.json_dump(config, dev_metrics), hip=hip, image=image)
+        return RetuveResult(
+            hip.json_dump(config, dev_metrics), hip=hip, image=image
+        )
     elif hip_mode == HipMode.US2DSW:
         hip, image, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
             file, config, modes_func, modes_func_kwargs_dict

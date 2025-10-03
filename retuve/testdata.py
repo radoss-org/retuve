@@ -31,7 +31,7 @@ def download_case(*args, disable_warning=False, **kwargs):
     """
 
     # identify if running inside pytest
-    if os.environ.get("RETUVE_DISABLE_WARNING") == "True":
+    if os.environ.get("RETUVE_DISABLE_WARNING", "").lower() == "true":
         disable_warning = True
 
     if disable_warning:
@@ -65,7 +65,9 @@ def download_case(*args, disable_warning=False, **kwargs):
         print("You did not agree to the terms. Exiting...")
         exit()
 
-    print("Thank you for agreeing to the terms. Proceeding with the test generation...")
+    print(
+        "Thank you for agreeing to the terms. Proceeding with the test generation..."
+    )
 
     return download_case_radstract(*args, **kwargs)
 
