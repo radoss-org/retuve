@@ -658,15 +658,11 @@ def analyse_hip_2DUS_sweep(
         ),
     )
 
-    if (
-        graf_hip is None
-        or graf_hip.metrics is None
-        and hip_datas.custom_metrics is not None
-    ):
+    if graf_hip is None or graf_hip.metrics is None:
         graf_hip = hip_datas[0]
-        graf_hip.metrics = hip_datas.custom_metrics
+        graf_hip.metrics = {}
 
-    elif getattr(hip_datas, "custom_metrics", None) is not None:
+    if getattr(hip_datas, "custom_metrics", None) is not None:
         graf_hip.metrics += hip_datas.custom_metrics
 
     return graf_hip, graf_image, hip_datas.dev_metrics, video_clip

@@ -18,6 +18,7 @@ files. It also has the functions used to make the CLI commands for running retuv
 on a single file or a batch of files.
 """
 
+import glob
 import json
 import multiprocessing
 import os
@@ -126,19 +127,19 @@ def run_batch(config: Config):
     """
     all_files = []
 
+    # Create a list of patterns with extensions
+    patterns = []
     for dataset in config.batch.datasets:
-        files = os.listdir(dataset)
+        for input_type in config.batch.input_types:
+            patterns.append(os.path.join(dataset, "**", f"*{input_type}"))
 
-        files = [
-            f"{dataset}/{file}"
-            for file in files
-            if any(
-                file.endswith(input_type)
-                for input_type in config.batch.input_types
-            )
-        ]
-
+    # Use glob for each pattern
+    for pattern in patterns:
+        files = glob.glob(pattern, recursive=True)
         all_files.extend(files)
+
+    # Remove any duplicates if they exist
+    all_files = list(set(all_files))
 
     start = time.time()
 
