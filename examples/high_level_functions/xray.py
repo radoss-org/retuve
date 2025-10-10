@@ -23,7 +23,7 @@ from retuve.testdata import Cases, download_case
 
 # Example usage
 # dcm_file = "path/to/file"
-# seg_file = /path/to/nifti"
+# seg_file = "/path/to/nifti"
 img_file, labels_json = download_case(Cases.XRAY_JPG)
 
 img_raw = Image.open(img_file)

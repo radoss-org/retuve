@@ -21,7 +21,7 @@ from retuve.testdata import Cases, download_case
 
 # Example usage
 # dcm_file = "path/to/file"
-# seg_file = /path/to/nifti"
+# seg_file = "/path/to/nifti"
 dcm_file, seg_file = download_case(Cases.ULTRASOUND_DICOM)
 
 dcm = pydicom.dcmread(dcm_file)

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from PIL import Image
-from radstract.data.dicom import convert_dicom_to_images
 from retuve_yolo_plugin.ultrasound import yolo_predict_us
 
 from retuve.defaults.hip_configs import default_US
