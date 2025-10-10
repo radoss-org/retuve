@@ -21,119 +21,17 @@ For this guide, we will use the `retuve-yolo-plugin`.
 Install it with:
 
 ```bash
-pip install git+https://github.com/radoss-org/retuve-yolo-plugin
+pip install retuve-yolo-plugin
 ```
 
-## Creating a Minimal Script
+We provide an up-to-date list of examples for using Retuve with X-Rays [here](https://github.com/radoss-org/retuve/tree/main/examples/ultrasound). The most useful are:
+- [Running Retuve with 2D ultrasound jpegs/pngs](https://github.com/radoss-org/retuve/tree/main/examples/ultrasound/ai_with_jpeg_2d.py)
+- [Running Retuve with 3D/Sweep ultrasound dicoms](https://github.com/radoss-org/retuve/tree/main/examples/ultrasound/ai_with_dicom.py)
+- [Running Retuve against a folder of ultrasounds](https://github.com/radoss-org/retuve/tree/main/examples/ultrasound/ai_with_multiple_scans.py)
 
-You only need to make a few changes to the example scripts to run the AI on your own data.
+We recommend that you change the following in these scripts:
+- Set the device with `my_config.device` or `default_US.device` if you are using `cuda`
 
-### 1. Import the Ultrasound Plugin and Required Modules
-
-```python
-from retuve_yolo_plugin.ultrasound import yolo_predict_dcm_us
-import pydicom
-from PIL import Image
-```
-
-### 2. Load Your Own DICOM File(s)
-
-You can load either a single DICOM file or a list of DICOM files:
-
-```python
-# For single DICOM file
-dcm_file = "path/to/your/dicom/file.dcm"
-dcm = pydicom.dcmread(dcm_file)
-```
-
-## Example Scripts
-
-### 2D Ultrasound Analysis
-
-Here is a complete example script for analyzing a single 2D ultrasound frame:
-
-```python
-import pydicom
-from radstract.data.dicom import DicomTypes
-from retuve_yolo_plugin.ultrasound import yolo_predict_dcm_us
-
-from retuve.defaults.hip_configs import default_US
-from retuve.funcs import analyse_hip_2DUS
-
-dcm_file = "./your/dicom/file.dcm"
-dcm = pydicom.dcmread(dcm_file)
-default_US.dicom_type = DicomTypes.SINGLE
-
-hip, img, dev_metrics = analyse_hip_2DUS(
-    dcm,
-    keyphrase=default_US,
-    modes_func=yolo_predict_dcm_us,
-    modes_func_kwargs_dict={},
-)
-
-img.save("ultrasound_2d.jpg")
-metrics = hip.json_dump(default_US, dev_metrics)
-```
-
-Note that you can also supply this function a pillow image. See https://github.com/radoss-org/retuve/blob/main/examples/high_level_functions/2dus.py
-
-### 3D Ultrasound Analysis
-
-For 3D ultrasound analysis:
-
-```python
-import pydicom
-from retuve_yolo_plugin.ultrasound import yolo_predict_dcm_us
-
-from retuve.defaults.hip_configs import default_US
-from retuve.funcs import analyse_hip_3DUS
-
-dcm_file = "./your/dicom/file.dcm"
-dcm = pydicom.dcmread(dcm_file)
-
-hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
-    dcm,
-    keyphrase=default_US,
-    modes_func=yolo_predict_dcm_us,
-    modes_func_kwargs_dict={},
-)
-
-video_clip.write_videofile("ultrasound_3d.mp4")
-visual_3d.write_html("ultrasound_3d_visual.html")
-metrics = hip_datas.json_dump(default_US)
-```
-
-Note that you can also supply this function a list of pillow images. See https://github.com/radoss-org/retuve/blob/main/tests/intergration/test_funcs.py#L144
-
-### 2D Sweep Ultrasound Analysis
-
-For 2D sweep ultrasound analysis:
-
-```python
-import pydicom
-from retuve_yolo_plugin.ultrasound import yolo_predict_dcm_us
-
-from retuve.defaults.hip_configs import default_US
-from retuve.funcs import analyse_hip_2DUS_sweep
-
-dcm_file = "./your/dicom/file.dcm"
-dcm = pydicom.dcmread(dcm_file)
-
-hip, img, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
-    dcm,
-    keyphrase=default_US,
-    modes_func=yolo_predict_dcm_us,
-    modes_func_kwargs_dict={},
-)
-
-img.save("ultrasound_2dsw_graf.jpg")
-video_clip.write_videofile("ultrasound_2dsw.mp4")
-metrics = hip.json_dump(default_US, dev_metrics)
-```
-
-Note that you can also supply this function a pillow image. See https://github.com/radoss-org/retuve/blob/main/tests/intergration/test_funcs.py#L165
-
-## Troubleshooting
 
 ## Further Reading
 

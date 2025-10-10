@@ -17,7 +17,6 @@ Provides a convenient way to download test data for the Retuve library.
 """
 
 import os
-import sys
 from enum import Enum
 
 from radstract.testdata import download_case as download_case_radstract
@@ -83,4 +82,20 @@ class Cases(Enum):
     XRAY_JPG = [
         f"{URL}/other/xray/331_DDH_115.jpg",
         f"{URL}/labels/xray/331_DDH_115.json",
+    ]
+
+    XRAY_DICOM = [f"{URL}/dicoms/xray/331_DDH_1.dcm"]
+
+    XRAY_JPG_DATASET = [
+        f"{URL}/other/xray/331_DDH_115.jpg",
+        f"{URL}/other/xray/331_DDH_116.jpg",
+        f"{URL}/other/xray/331_DDH_123.jpg",
+    ]
+
+    ULTRASOUND_DCM_DATASET = [
+        f"{URL}/dicoms/ultrasound/171551.dcm",
+    ]
+
+    ULTRASOUND_JPG = [
+        f"{URL}/other/ultrasound/172535_0.png",
     ]
