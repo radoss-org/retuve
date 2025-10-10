@@ -20,7 +20,7 @@ from retuve_yolo_plugin.ultrasound import (
 )
 
 from retuve.batch import run_batch
-from retuve.defaults.hip_configs import default_xray
+from retuve.defaults.hip_configs import default_US
 from retuve.keyphrases.enums import HipMode
 from retuve.testdata import Cases, download_case
 
@@ -28,7 +28,7 @@ from retuve.testdata import Cases, download_case
 dcm_file, *_ = download_case(Cases.ULTRASOUND_DCM_DATASET)
 DATASET_DIR = os.path.join(os.path.dirname(dcm_file))
 
-my_config = default_xray.get_copy()
+my_config = default_US.get_copy()
 my_config.batch.hip_mode = HipMode.US3D  # or HipMode.US2DSW
 my_config.batch.mode_func = yolo_predict_dcm_us
 my_config.batch.mode_func_args = {"model": get_yolo_model_us(my_config)}
