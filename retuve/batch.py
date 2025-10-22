@@ -33,6 +33,13 @@ from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Outputs
 from retuve.logs import ulogger
 
+# Try to import torch for GPU cache clearing
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
 
 def run_single(
     config: Config,
@@ -131,6 +138,26 @@ def run_single(
         e = traceback.format_exc()
         ulogger.error(f"Error processing file {file_name}: {e}")
         return e
+    finally:
+        if hasattr(retuve_result, 'video_clip') and retuve_result.video_clip is not None:
+            try:
+                retuve_result.video_clip.close()
+            except:
+                pass
+
+        # Close image if it exists
+        if hasattr(retuve_result, 'image') and retuve_result.image is not None:
+            try:
+                retuve_result.image.close()
+            except:
+                pass
+
+        # Clear GPU cache if using CUDA
+        if TORCH_AVAILABLE:
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                # Synchronize to ensure all operations are complete
+                torch.cuda.synchronize()
 
 
 def run_batch(config: Config):
