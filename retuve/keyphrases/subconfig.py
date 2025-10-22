@@ -160,6 +160,7 @@ class BatchConfig:
         processes: int,
         input_types: List[Literal[".dcm", ".jpg", ".png"]],
         datasets: List[str],
+        debug: bool,
     ):
         """
         Initialize BatchConfig.
@@ -170,6 +171,7 @@ class BatchConfig:
         :param processes (int): The number of processes to use.
         :param input_types (list): The type of input to use.
         :param datasets (list): The datasets to process.
+        :param debug (bool): Debug by disabling multiprocessing
 
         :attr outputs (list): The outputs to generate.
         """
@@ -179,6 +181,7 @@ class BatchConfig:
         self.processes = processes
         self.input_types = input_types
         self.datasets = datasets
+        self.debug = debug
 
         # set properly upon registration
         self.outputs: List[Outputs] = [Outputs.METRICS]

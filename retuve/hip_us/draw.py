@@ -140,10 +140,12 @@ def draw_hips_us(
             for pdf in post_draw_funcs
         ]:
             try:
-                out = func(final_hip, seg_frame_objs, overlay, config)
+                out = func(final_hip, final_seg_frame_objs, overlay, config)
                 if isinstance(out, Overlay):
                     overlay = out
             except Exception as e:
+                if config.batch.debug == True:
+                    raise e
                 ulogger.error(
                     f"Post-draw function {getattr(func, '__name__', str(func))} failed: {e}"
                 )

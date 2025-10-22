@@ -14,8 +14,8 @@
 
 """
 This module contains the functions to run the retuve pipeline on a batch of
-files. It also has the functions used to make the CLI commands for running retuve
-on a single file or a batch of files.
+files. It also has the functions used to make the CLI commands for running
+retuve on a single file or a batch of files.
 """
 
 import glob
@@ -25,6 +25,8 @@ import os
 import shutil
 import time
 import traceback
+
+import numpy as np
 
 from retuve.funcs import retuve_run
 from retuve.keyphrases.config import Config
@@ -109,11 +111,23 @@ def run_single(
         if config.seg_export and hip_datas and hip_datas.nifti is not None:
             hip_datas.nifti.save(f"{savedir}/{fileid}{Outputs.NIFTI}")
 
-        # save the metrics to a file
+        def convert_numpy_types(obj):
+            """Recursively convert NumPy types to native Python types."""
+            if isinstance(obj, dict):
+                return {k: convert_numpy_types(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy_types(item) for item in obj]
+            elif isinstance(obj, (np.floating, np.integer)):
+                return obj.item()
+            return obj
+
+        # At the write location:
         with open(f"{savedir}/{fileid}{Outputs.METRICS}", "w") as f:
-            f.write(json.dumps(retuve_result.metrics))
+            f.write(json.dumps(convert_numpy_types(retuve_result.metrics)))
 
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         e = traceback.format_exc()
         ulogger.error(f"Error processing file {file_name}: {e}")
         return e
@@ -147,12 +161,21 @@ def run_batch(config: Config):
     if not os.path.exists(config.api.savedir):
         os.makedirs(config.api.savedir, exist_ok=True)
 
-    if not multiprocessing.get_start_method(allow_none=True):
-        multiprocessing.set_start_method("spawn", force=True)
+    errors = []
 
-    with multiprocessing.Pool(processes=config.batch.processes) as pool:
-        chunks = [(config, file, True) for file in all_files]
-        errors = pool.starmap(run_single, chunks)
+    if config.batch.debug:
+        # Debug mode: process sequentially without multiprocessing
+        for file in all_files:
+            error = run_single(config, file, True)
+            errors.append(error)
+    else:
+        # Multiprocessing mode
+        if not multiprocessing.get_start_method(allow_none=True):
+            multiprocessing.set_start_method("spawn", force=True)
+
+        with multiprocessing.Pool(processes=config.batch.processes) as pool:
+            chunks = [(config, file, True) for file in all_files]
+            errors = pool.starmap(run_single, chunks)
 
     if any(error is not None for error in errors):
         already_processed = sum(

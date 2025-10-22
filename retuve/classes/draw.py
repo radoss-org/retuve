@@ -22,8 +22,8 @@ from typing import List, Literal, Optional, Tuple
 import numpy as np
 from PIL import Image, ImageDraw
 from radstract.data.colors import LabelColours
-
 from retuve.classes.seg import SegFrameObjects
+from retuve.hip_us.classes.general import LandmarksUS
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Colors
 
@@ -231,14 +231,34 @@ class Overlay:
 
     def draw_skeleton(self, skel: List[Tuple[int, int]]):
         """
-        Draws a skeleton on the overlay using polyfit to create a smooth line.
+        Draws a skeleton on the overlay by connecting the closest points
+        with lines, starting from the leftmost point.
 
         :param skel: List of points to draw the skeleton.
         """
-        # If polynomial fitting fails, fall back to connecting original points with lines
-        for i in range(len(skel) - 1):
-            y1, x1 = skel[i]
-            y2, x2 = skel[i + 1]
+        if len(skel) <= 1:
+            return
+
+        # Start with the leftmost point
+        remaining = set(range(len(skel)))
+        current_idx = min(remaining, key=lambda i: skel[i][1])
+        ordered = [current_idx]
+        remaining.remove(current_idx)
+
+        # Greedily connect to the nearest unvisited point
+        while remaining:
+            current_idx = min(
+                remaining,
+                key=lambda i: (skel[i][0] - skel[current_idx][0]) ** 2
+                + (skel[i][1] - skel[current_idx][1]) ** 2,
+            )
+            ordered.append(current_idx)
+            remaining.remove(current_idx)
+
+        # Draw lines between consecutive points
+        for i in range(len(ordered) - 1):
+            y1, x1 = skel[ordered[i]]
+            y2, x2 = skel[ordered[i + 1]]
             self.add_operation(
                 DrawTypes.LINES,
                 [(x1, y1), (x2, y2)],
@@ -257,6 +277,18 @@ class Overlay:
         :param line_points: List of tuples of points to draw lines between.
 
         """
+
+        if type(line_points[0][0]) == LandmarksUS:
+            new_line_points = []
+            for line in line_points:
+                for landmark1, landmark2 in line:
+                    new_line_points.append(
+                        [
+                            (landmark1[0], landmark1[1]),
+                            (landmark2[0], landmark2[1]),
+                        ]
+                    )
+            line_points = new_line_points
 
         if color_override:
             color = color_override

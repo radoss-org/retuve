@@ -175,6 +175,8 @@ def process_segs_us(
             if updated is not None:
                 results = updated
         except Exception as e:
+            if config.batch.debug == True:
+                raise e
             ulogger.error(
                 f"Seg preprocess function {getattr(preprocess, '__name__', str(preprocess))} failed: {e}"
             )
@@ -284,6 +286,8 @@ def process_segs_us(
                             pf_name, []
                         ).append(dev_extra)
         except Exception as e:
+            if config.batch.debug == True:
+                raise e
             ulogger.error(f"Per-frame metric functions failed: {e}")
 
     if config.test_data_passthrough:
@@ -385,6 +389,8 @@ def analyze_synthetic_xray(
                 config, landmark_results, seg_results
             )
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         ulogger.error(f"Critical Error: {e}")
         return None
 
@@ -450,6 +456,8 @@ def analyse_hip_3DUS(
                 "This is not yet supported. Please use the seg operation type."
             )
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None, None
 
@@ -554,7 +562,8 @@ def analyse_hip_2DUS(
                 called_by_2dus=True,
             )
     except Exception as e:
-        raise e
+        if config.batch.debug == True:
+            raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None
 
@@ -624,6 +633,8 @@ def analyse_hip_2DUS_sweep(
                 "This is not yet supported. Please use the seg operation type."
             )
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None, None
 

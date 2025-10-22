@@ -17,6 +17,7 @@ Default Configs for Each Subconfig in the Keyphrases Module.
 """
 
 from radstract.data.dicom import DicomTypes
+
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import (
     ACASplit,
@@ -126,6 +127,7 @@ batch = BatchConfig(
     processes=1,
     input_types=[".dcm", ".jpg"],
     datasets=[api.upload_dir],
+    debug=False,
 )
 
 base_config = Config(
