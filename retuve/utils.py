@@ -68,6 +68,8 @@ def rmean(values: List[float]) -> float:
     :param values: The list of values to calculate the mean of.
     :return: The rounded mean of the values.
     """
+    # Sometimes we get float32 here?
+    values = [float(value) for value in values]
     return round(statistics.mean(values), 2)
 
 

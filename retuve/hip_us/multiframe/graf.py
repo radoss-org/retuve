@@ -23,7 +23,6 @@ from typing import List
 import cv2
 import numpy as np
 from filelock import FileLock
-
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.enums import HipLabelsUS
 from retuve.hip_us.classes.general import HipDatasUS
@@ -272,7 +271,9 @@ def graf_frame_algo(
 
 @warning_decorator(alpha=True)
 def find_graf_plane(
-    hip_datas: HipDatasUS, results: List[SegFrameObjects], config: Config
+    hip_datas: HipDatasUS,
+    results: List[SegFrameObjects],
+    config: Config,
 ) -> HipDatasUS:
     """
     Find the Graf Plane for the hip US module.
@@ -323,7 +324,10 @@ def find_graf_plane(
 
 
 def find_graf_plane_manual_features(
-    hip_datas: HipDatasUS, results: List[SegFrameObjects], config: Config
+    hip_datas: HipDatasUS,
+    results: List[SegFrameObjects],
+    config: Config,
+    just_graf_confs=False,
 ) -> HipDatasUS:
     """
     Find the Graf Plane for the hip US module.
@@ -366,7 +370,7 @@ def find_graf_plane_manual_features(
     ]
 
     if len(all_illiums) > 0:
-        hip_datas.graf_confs = [
+        graf_confs = [
             graf_frame_algo(
                 (hip_data, seg_frame_objs),
                 max_alpha,
@@ -386,6 +390,10 @@ def find_graf_plane_manual_features(
     if max_alpha == 0:
         hip_datas.recorded_error.append("Max Alpha is 0.")
         hip_datas.recorded_error.critical = True
+
+        if just_graf_confs:
+            return None, None
+
         return hip_datas
 
     if not hasattr(hip_datas, "file_id"):
@@ -410,12 +418,20 @@ def find_graf_plane_manual_features(
         key=lambda index: abs(index - center),
     )
 
-    best_conf = hip_datas.graf_confs[graf_frame]
+    best_conf = graf_confs[graf_frame]
     if best_conf < 1:
         ulogger.warning("No high-quality Graf Frames found")
         hip_datas.recorded_error.append("No High-Quality Graf Frames found.")
         hip_datas.recorded_error.critical = True
+        if just_graf_confs:
+            return None, None
+
         return hip_datas
+
+    if just_graf_confs:
+        return graf_confs, graf_frame
+
+    hip_datas.graf_confs = graf_confs
 
     hip_datas.graf_frame = graf_frame
 

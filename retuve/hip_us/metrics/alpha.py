@@ -22,7 +22,6 @@ from typing import List, Tuple
 import numpy as np
 from PIL import Image, ImageDraw
 from radstract.math import smart_find_intersection
-
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegObject
 from retuve.hip_us.classes.general import HipDataUS, LandmarksUS
@@ -158,7 +157,11 @@ def draw_alpha(hip: HipDataUS, overlay: Overlay, config: Config) -> Overlay:
     :return: Overlay: The updated Overlay.
     """
     alpha = hip.get_metric(MetricUS.ALPHA)
-    if alpha != 0:
+    if (
+        alpha != 0
+        and (hip.landmarks.apex[0] - hip.landmarks.left[0]) != 0
+        and (hip.landmarks.right[0] - hip.landmarks.apex[0]) != 0
+    ):
         m1 = (hip.landmarks.apex[1] - hip.landmarks.left[1]) / (
             hip.landmarks.apex[0] - hip.landmarks.left[0]
         )

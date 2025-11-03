@@ -26,6 +26,7 @@ from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.general import LandmarksUS
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Colors
+from scipy.spatial import KDTree
 
 # No midline curve will ever be more complex than this
 POLY_DEGREE = 5
@@ -153,16 +154,12 @@ class Overlay:
             if not seg_obj.empty:
                 draw.polygon(
                     seg_obj.points,
-                    fill=LabelColours.get_color_from_index(
-                        seg_obj.cls.value + 1
-                    ),
+                    fill=LabelColours.get_color_from_index(seg_obj.cls.value + 1),
                 )
 
         return seg_overlay
 
-    def draw_cross(
-        self, point: Tuple[int, int], override_line_thickness: int = None
-    ):
+    def draw_cross(self, point: Tuple[int, int], override_line_thickness: int = None):
         """
         Draws a cross of a given radius at a specified point on the overlay.
 
@@ -177,15 +174,13 @@ class Overlay:
             DrawTypes.POINTS,
             (x - radius, y, x + radius, y),
             fill=color,
-            width=override_line_thickness
-            or self.config.visuals.line_thickness,
+            width=override_line_thickness or self.config.visuals.line_thickness,
         )
         self.add_operation(
             DrawTypes.POINTS,
             (x, y - radius, x, y + radius),
             fill=color,
-            width=override_line_thickness
-            or self.config.visuals.line_thickness,
+            width=override_line_thickness or self.config.visuals.line_thickness,
         )
 
     def draw_segmentation(self, points: List[Tuple[int, int]]):
@@ -198,9 +193,7 @@ class Overlay:
         self.add_operation(
             DrawTypes.SEGS,
             points,
-            fill=self.config.visuals.seg_color.rgba(
-                self.config.visuals.seg_alpha
-            ),
+            fill=self.config.visuals.seg_color.rgba(self.config.visuals.seg_alpha),
         )
 
     def draw_box(self, box: Tuple[int, int, int, int], grafs: bool = False):
@@ -233,27 +226,33 @@ class Overlay:
         """
         Draws a skeleton on the overlay by connecting the closest points
         with lines, starting from the leftmost point.
-
-        :param skel: List of points to draw the skeleton.
         """
         if len(skel) <= 1:
             return
 
-        # Start with the leftmost point
-        remaining = set(range(len(skel)))
-        current_idx = min(remaining, key=lambda i: skel[i][1])
-        ordered = [current_idx]
-        remaining.remove(current_idx)
+        points = np.array(skel)  # shape (n, 2) as (y, x)
+        tree = KDTree(points)
 
-        # Greedily connect to the nearest unvisited point
-        while remaining:
-            current_idx = min(
-                remaining,
-                key=lambda i: (skel[i][0] - skel[current_idx][0]) ** 2
-                + (skel[i][1] - skel[current_idx][1]) ** 2,
+        # Start with the leftmost (smallest x) point
+        current_idx = np.argmin(points[:, 1])
+        ordered = [current_idx]
+        visited = np.zeros(len(points), dtype=bool)
+        visited[current_idx] = True
+
+        for _ in range(len(points) - 1):
+            # Find nearest unvisited neighbor
+            dist, idx = tree.query(
+                points[current_idx],
+                k=len(points),  # get all possible neighbors
             )
-            ordered.append(current_idx)
-            remaining.remove(current_idx)
+            # pick the first unvisited neighbor
+            for ni in idx:
+                if not visited[ni]:
+                    next_idx = ni
+                    break
+            ordered.append(next_idx)
+            visited[next_idx] = True
+            current_idx = next_idx
 
         # Draw lines between consecutive points
         for i in range(len(ordered) - 1):

@@ -23,7 +23,6 @@ import numpy as np
 import open3d as o3d
 from numpy import ndarray as NDArray
 from plotly.graph_objects import Figure
-
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.enums import Side
 from retuve.hip_us.classes.general import HipDatasUS, Metric3D

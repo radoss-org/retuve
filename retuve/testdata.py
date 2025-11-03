@@ -65,9 +65,7 @@ def download_case(*args, disable_warning=False, **kwargs):
         print("You did not agree to the terms. Exiting...")
         exit()
 
-    print(
-        "Thank you for agreeing to the terms. Proceeding with the test generation..."
-    )
+    print("Thank you for agreeing to the terms. Proceeding with the test generation...")
 
     return download_case_radstract(*args, **kwargs)
 

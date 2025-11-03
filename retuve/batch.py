@@ -33,13 +33,6 @@ from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Outputs
 from retuve.logs import ulogger
 
-# Try to import torch for GPU cache clearing
-try:
-    import torch
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
-
 
 def run_single(
     config: Config,
@@ -101,19 +94,16 @@ def run_single(
             retuve_result.image.save(f"{savedir}/{fileid}{Outputs.IMAGE}")
 
         if retuve_result.metrics and retuve_result.metrics.get("dev_metrics"):
-            ulogger.info(
-                "\n Dev Metrics: ", retuve_result.metrics["dev_metrics"]
-            )
+            ulogger.info("\n Dev Metrics: ", retuve_result.metrics["dev_metrics"])
 
         if retuve_result.video_clip is not None:
             retuve_result.video_clip.write_videofile(
                 f"{savedir}/{fileid}{Outputs.VIDEO_CLIP}",
             )
+            retuve_result.video_clip.close()
 
         if retuve_result.visual_3d is not None:
-            retuve_result.visual_3d.write_html(
-                f"{savedir}/{fileid}{Outputs.VISUAL3D}"
-            )
+            retuve_result.visual_3d.write_html(f"{savedir}/{fileid}{Outputs.VISUAL3D}")
 
         if config.seg_export and hip_datas and hip_datas.nifti is not None:
             hip_datas.nifti.save(f"{savedir}/{fileid}{Outputs.NIFTI}")
@@ -138,29 +128,9 @@ def run_single(
         e = traceback.format_exc()
         ulogger.error(f"Error processing file {file_name}: {e}")
         return e
-    finally:
-        if hasattr(retuve_result, 'video_clip') and retuve_result.video_clip is not None:
-            try:
-                retuve_result.video_clip.close()
-            except:
-                pass
-
-        # Close image if it exists
-        if hasattr(retuve_result, 'image') and retuve_result.image is not None:
-            try:
-                retuve_result.image.close()
-            except:
-                pass
-
-        # Clear GPU cache if using CUDA
-        if TORCH_AVAILABLE:
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                # Synchronize to ensure all operations are complete
-                torch.cuda.synchronize()
 
 
-def run_batch(config: Config):
+def run_batch(config: Config, filter_func=None):
     """
     Run the retuve pipeline on a batch of files.
 
@@ -182,6 +152,9 @@ def run_batch(config: Config):
     # Remove any duplicates if they exist
     all_files = list(set(all_files))
 
+    if filter_func:
+        all_files = filter_func(all_files)
+
     start = time.time()
 
     # create savedir if it doesn't exist
@@ -191,24 +164,27 @@ def run_batch(config: Config):
     errors = []
 
     if config.batch.debug:
-        # Debug mode: process sequentially without multiprocessing
-        for file in all_files:
-            error = run_single(config, file, True)
-            errors.append(error)
+        all_files = sorted(all_files)
+        for i, file in enumerate(all_files):
+            print(f"\n{'='*60}")
+            print(f"Processing file {i+1}/{len(all_files)}: {file}")
+            print("=" * 60)
+
+            run_single(config, file, True)
     else:
         # Multiprocessing mode
         if not multiprocessing.get_start_method(allow_none=True):
             multiprocessing.set_start_method("spawn", force=True)
 
-        with multiprocessing.Pool(processes=config.batch.processes) as pool:
+        with multiprocessing.Pool(
+            processes=config.batch.processes, maxtasksperchild=1
+        ) as pool:
             chunks = [(config, file, True) for file in all_files]
             errors = pool.starmap(run_single, chunks)
 
     if any(error is not None for error in errors):
         already_processed = sum(
-            "already processed" in error
-            for error in errors
-            if error is not None
+            "already processed" in error for error in errors if error is not None
         )
         # count and remove all errors containing "already processed"
         errors = [
