@@ -2231,7 +2231,7 @@ wheels = [
 
 [[package]]
 name = "radstract"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "black" },
@@ -2257,9 +2257,9 @@ dependencies = [
     { name = "vulture" },
     { name = "weasyprint" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/72/6a/11d2bebe6d7d4b38d30ec249ce3d494f496897e207d2ae54b29f3bf04d1b/radstract-1.0.0.tar.gz", hash = "sha256:570d2a89a015b4f8c3e01e072d9efe684f4629cb8f4c3fc5534185e265d500e7", size = 184624, upload-time = "2025-09-15T12:29:52.799Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9e/93/655105f5c925e2675ad6872f6ba0614e4e10423553e342facf67367ea283/radstract-1.0.1.tar.gz", hash = "sha256:1a8893201d5cd43e3f570d3ae944e02df5e22bb8bc60577589447b742ff9b1f0", size = 179524, upload-time = "2026-03-09T04:01:40.621Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/db/3cb611ecdeed8ba4ed91a3c7fe31bd51e4131dde2e12a383015b038d3ca6/radstract-1.0.0-py3-none-any.whl", hash = "sha256:04e4f3fe4ed7f13d063a880f08afa4c06a3ed138b220f0c01bb946456ce7cc7a", size = 61068, upload-time = "2025-09-15T12:29:51.385Z" },
+    { url = "https://files.pythonhosted.org/packages/64/be/aeb55d4ce7d9864bc3e9ef1176d7896df592e6ff00951c1d6caee881801c/radstract-1.0.1-py3-none-any.whl", hash = "sha256:b26b5aa5ecc980d6090680e26b8ee96f21fece263a3a17794e38a82002bcd37d", size = 62467, upload-time = "2026-03-09T04:01:39.026Z" },
 ]
 
 [[package]]
