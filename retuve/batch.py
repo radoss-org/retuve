@@ -18,15 +18,16 @@ files. It also has the functions used to make the CLI commands for running
 retuve on a single file or a batch of files.
 """
 
+import copy
 import glob
 import json
-import multiprocessing
 import os
 import shutil
 import time
 import traceback
 
 import numpy as np
+import torch.multiprocessing as multiprocessing
 
 from retuve.funcs import retuve_run
 from retuve.keyphrases.config import Config
@@ -176,9 +177,7 @@ def run_batch(config: Config, filter_func=None):
         if not multiprocessing.get_start_method(allow_none=True):
             multiprocessing.set_start_method("spawn", force=True)
 
-        with multiprocessing.Pool(
-            processes=config.batch.processes, maxtasksperchild=1
-        ) as pool:
+        with multiprocessing.Pool(processes=config.batch.processes) as pool:
             chunks = [(config, file, True) for file in all_files]
             errors = pool.starmap(run_single, chunks)
 

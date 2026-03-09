@@ -195,60 +195,6 @@ def process_segs_us(
     ):
         hip_datas.dev_metrics_custom = {}
 
-    for metric_name, metric_func in config.hip.full_metric_functions:
-        value = 0
-        dev_extra = {}
-        # Try different call signatures: (hip_datas, results, config), (hip_datas, config), (hip_datas)
-        for args in [
-            (hip_datas, results, config),
-            (hip_datas, config),
-            (hip_datas,),
-        ]:
-            try:
-                result = metric_func(*args)
-                # Support multiple return shapes: scalar, (scalar, dict), dict-only
-                if (
-                    isinstance(result, tuple)
-                    and len(result) == 2
-                    and isinstance(result[1], dict)
-                ):
-                    value, dev_extra = result
-                elif isinstance(result, dict):
-                    dev_extra = result
-                    value = 0
-                else:
-                    value = result
-                break
-            except TypeError as e:
-                if "positional argument" in str(e):
-                    continue
-                raise e
-            except Exception as e:
-                if config.batch.debug == True:
-                    raise e
-                value = 0
-                break
-
-        if getattr(hip_datas, "custom_metrics", None) is None:
-            hip_datas.custom_metrics = []
-
-        if not called_by_2dus:
-            custom_metric = Metric3D(name=metric_name, full=value)
-            hip_datas.custom_metrics.append(custom_metric)
-        else:
-            custom_metric = Metric2D(name=metric_name, value=value)
-            hip_datas.custom_metrics.append(custom_metric)
-
-        # Aggregate any custom dev metrics returned by this metric function
-        if dev_extra:
-            try:
-                # Group dev extras by the metric name for clarity
-                if metric_name not in hip_datas.dev_metrics_custom:
-                    hip_datas.dev_metrics_custom[metric_name] = {}
-                hip_datas.dev_metrics_custom[metric_name].update(dev_extra)
-            except Exception:
-                pass
-
     # Run custom per-frame metrics functions, if any
     per_frame_funcs = getattr(config.hip, "per_frame_metric_functions", []) or []
     if per_frame_funcs:
@@ -285,6 +231,61 @@ def process_segs_us(
             if config.batch.debug == True:
                 raise e
             ulogger.error(f"Per-frame metric functions failed: {e}")
+
+    for metric_name, metric_func in config.hip.full_metric_functions:
+        value = 0
+        dev_extra = {}
+        # Try different call signatures: (hip_datas, results, config), (hip_datas, config), (hip_datas)
+        for args in [
+            (hip_datas, results, config),
+            (hip_datas, config),
+            (hip_datas,),
+        ]:
+            try:
+                result = metric_func(*args)
+                # Support multiple return shapes: scalar, (scalar, dict), dict-only
+                if (
+                    isinstance(result, tuple)
+                    and len(result) == 2
+                    and isinstance(result[1], dict)
+                ):
+                    value, dev_extra = result
+                elif isinstance(result, dict):
+                    dev_extra = result
+                    value = 0
+                else:
+                    value = result
+                break
+            except TypeError as e:
+                if "positional argument" in str(e):
+                    continue
+                raise e
+            except Exception as e:
+                if config.batch.debug == True:
+                    raise e
+                value = 0
+                ulogger.error(f"Full metric function failed: {e}")
+                break
+
+        if getattr(hip_datas, "custom_metrics", None) is None:
+            hip_datas.custom_metrics = []
+
+        if not called_by_2dus:
+            custom_metric = Metric3D(name=metric_name, full=value)
+            hip_datas.custom_metrics.append(custom_metric)
+        else:
+            custom_metric = Metric2D(name=metric_name, value=value)
+            hip_datas.custom_metrics.append(custom_metric)
+
+        # Aggregate any custom dev metrics returned by this metric function
+        if dev_extra:
+            try:
+                # Group dev extras by the metric name for clarity
+                if metric_name not in hip_datas.dev_metrics_custom:
+                    hip_datas.dev_metrics_custom[metric_name] = {}
+                hip_datas.dev_metrics_custom[metric_name].update(dev_extra)
+            except Exception:
+                pass
 
     if config.test_data_passthrough:
         hip_datas.pre_edited_results = pre_edited_results
@@ -588,6 +589,7 @@ def analyse_hip_2DUS_sweep(
 ) -> Tuple[HipDataUS, Image.Image, DevMetricsUS, ImageSequenceClip]:
 
     config = Config.get_config(keyphrase)
+    config.batch.hip_mode = HipMode.US2DSW
     hip_datas = HipDatasUS()
 
     # Convert list of images to DICOM
@@ -616,6 +618,8 @@ def analyse_hip_2DUS_sweep(
 
     graf_hip = hip_datas.grafs_hip
     graf_frame = hip_datas.graf_frame
+    graf_hip.graf_frame = graf_frame
+    graf_hip.recorded_error = hip_datas.recorded_error
 
     image_arrays, _ = draw_hips_us(hip_datas, results, None, config)
 
@@ -624,7 +628,31 @@ def analyse_hip_2DUS_sweep(
     if graf_frame is not None:
         graf_image = Image.fromarray(image_arrays[graf_frame])
     else:
-        graf_image = None
+        graf_image = Image.fromarray(image_arrays[len(image_arrays) // 2])
+        marked_pairs = [
+            (hip, Image.fromarray(image), conf)
+            for hip, image, conf in zip(hip_datas, image_arrays, hip_datas.graf_confs)
+            if hip.marked
+        ]
+
+        try:
+            if marked_pairs:
+                graf_image = marked_pairs[len(marked_pairs) // 2][1]
+
+                graf_image = min(
+                    marked_pairs,
+                    key=lambda pair: (
+                        abs(pair[0].landmarks.left[1] - pair[0].landmarks.apex[1]),
+                        -abs(pair[0].landmarks.apex[0] - pair[0].landmarks.left[0]),
+                    ),
+                )[1]
+
+                graf_image = max(
+                    marked_pairs,
+                    key=lambda pair: (pair[2]),
+                )[1]
+        except AttributeError:
+            pass
 
     video_clip = ImageSequenceClip(
         image_arrays,
@@ -635,7 +663,7 @@ def analyse_hip_2DUS_sweep(
         ),
     )
 
-    if getattr(hip_datas, "custom_metrics", None) is not None and graf_hip:
+    if getattr(hip_datas, "custom_metrics", None) is not None and graf_hip.metrics:
         graf_hip.metrics += hip_datas.custom_metrics
 
     return graf_hip, graf_image, hip_datas.dev_metrics, video_clip
@@ -678,9 +706,10 @@ def retuve_run(
     file: str,
 ) -> RetuveResult:
     org_file_name = file
+    # 0 or 1 because we assume nothing means no extention dicoms
     always_dcm = (
         len(config.batch.input_types) == 1 and ".dcm" in config.batch.input_types
-    )
+    ) or config.batch.input_types == [""]
 
     is_dicom = always_dcm or (
         file.endswith(".dcm") and ".dcm" in config.batch.input_types
@@ -709,7 +738,10 @@ def retuve_run(
             hip, image, dev_metrics = analyse_hip_xray_2D(
                 img, config, modes_func, modes_func_kwargs_dict
             )
-        return RetuveResult(hip.json_dump(config, dev_metrics), image=image, hip=hip)
+
+            dump = hip.json_dump(config, dev_metrics)
+            dump["landmarks"] = dict(hip.landmarks.items())
+        return RetuveResult(dump, image=image, hip=hip)
 
     elif hip_mode == HipMode.US2D:
         img = load_image(file)

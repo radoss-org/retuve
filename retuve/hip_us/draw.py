@@ -24,16 +24,12 @@ from typing import List, Tuple
 import cv2
 import numpy as np
 from attr import has
+from matplotlib.artist import get
 from PIL import Image, ImageOps
 from radstract.data.nifti import NIFTI, convert_images_to_nifti_labels
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegFrameObjects
-from retuve.draw import (
-    TARGET_SIZE,
-    draw_landmarks,
-    draw_seg,
-    resize_data_for_display,
-)
+from retuve.draw import TARGET_SIZE, draw_landmarks, draw_seg, resize_data_for_display
 from retuve.hip_us.classes.enums import Side
 from retuve.hip_us.classes.general import HipDatasUS, HipDataUS
 from retuve.hip_us.handlers.side import get_side_metainfo
@@ -112,8 +108,10 @@ def draw_hips_us(
             )
 
         graf_conf = None
-        if hasattr(hip_datas, "graf_confs"):
+        feature_scores = None
+        if len(getattr(hip_datas, "graf_confs", [])) > (len(hip_datas) - 1):
             graf_conf = hip_datas.graf_confs[hip.frame_no]
+            feature_scores = hip_datas.feature_score_map[hip.frame_no]
 
         overlay, is_graf = draw_other(
             final_hip,
@@ -123,6 +121,7 @@ def draw_hips_us(
             final_image.shape[:2],
             config,
             graf_conf,
+            feature_scores,
         )
 
         # Run any custom post-draw hooks after base drawing (standard signature)
@@ -159,6 +158,8 @@ def draw_hips_us(
 
         img = overlay.apply_to_image(final_image)
 
+        side_by_side = np.hstack((final_image, img))
+
         if config.seg_export:
             original_image = seg_frame_objs.img
             test = overlay.get_nifti_frame(
@@ -171,7 +172,7 @@ def draw_hips_us(
         # if its the graf frame, append 5 copies
         repeats = len(results) // 6 if is_graf else 1
         for _ in range(repeats):
-            image_arrays.append(img)
+            image_arrays.append(side_by_side)
 
         draw_timings.append(time.time() - start)
 
@@ -203,6 +204,7 @@ def draw_other(
     shape: tuple,
     config: Config,
     graf_conf: float = None,
+    feature_scores=None,
 ) -> Tuple[Overlay, bool]:
     """
     Draw the other meta information on the image
@@ -228,9 +230,18 @@ def draw_other(
 
     if graf_conf is not None and config.hip.display_graf_conf:
         overlay.draw_text(
-            f"Graf Confidence: {graf_conf:.2f}",
-            shape[0] - 100,
+            f"Graf Confidence: {graf_conf:.1f}",
+            shape[1] - 275,
             0,
+            header="h1",
+        )
+
+        feature_scores = [int(score) for score in feature_scores]
+
+        overlay.draw_text(
+            f"{feature_scores}",
+            shape[1] - 315,
+            25,
             header="h1",
         )
 

@@ -19,7 +19,6 @@ Handles Segmentaitions that are not valid for analysis.
 from typing import Dict, List
 
 from PIL import Image
-
 from retuve.classes.seg import SegObject
 from retuve.hip_us.classes.enums import HipLabelsUS
 

@@ -72,6 +72,7 @@ def landmarks_2_metrics_xray(
             for metric in METRIC_CONFIG:
                 base, suffix = metric["base_name"], metric["suffix"]
                 value_l, value_r = metric["func"](landmarks)
+                value_l, value_r = round(float(value_l), 2), round(float(value_r), 2)
                 hip.metrics.append(Metric2D(f"{base}_{suffix}_left", value_l))
                 hip.metrics.append(Metric2D(f"{base}_{suffix}_right", value_r))
 

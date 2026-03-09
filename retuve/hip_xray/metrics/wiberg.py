@@ -125,20 +125,20 @@ def draw_wiberg(hip: HipDataXray, overlay: Overlay, config: Config):
             [
                 new_P_line_left,
             ],
-            color_override=Colors.RED,
+            color_override=Colors.WHITE,
         )
-        overlay.draw_lines(
-            [
-                new_wiberg_line_left,
-            ],
-            color_override=Colors.GOLD_LIGHT,
-        )
+        # overlay.draw_lines(
+        #     [
+        #         new_wiberg_line_left,
+        #     ],
+        #     color_override=Colors.GOLD_LIGHT,
+        # )
 
-        overlay.draw_text(
-            f"Wiberg: {hip.metrics[2].value}",
-            landmarks.pel_l_o[0] - 100,
-            (landmarks.pel_l_i[1] + 80),
-        )
+        # overlay.draw_text(
+        #     f"Wiberg: {hip.metrics[2].value}",
+        #     landmarks.pel_l_o[0] - 100,
+        #     (landmarks.pel_l_i[1] + 80),
+        # )
 
     if landmarks.h_point_r is not None:
         P_line_intercept_right = find_perpendicular_point(
@@ -158,18 +158,18 @@ def draw_wiberg(hip: HipDataXray, overlay: Overlay, config: Config):
             [
                 new_P_line_right,
             ],
-            color_override=Colors.RED,
+            color_override=Colors.WHITE,
         )
-        overlay.draw_lines(
-            [
-                new_wiberg_line_right,
-            ],
-            color_override=Colors.GOLD_LIGHT,
-        )
-        overlay.draw_text(
-            f"Wiberg: {hip.metrics[3].value}",
-            landmarks.pel_r_o[0] - 100,
-            (landmarks.pel_r_i[1] + 80),
-        )
+        # overlay.draw_lines(
+        #     [
+        #         new_wiberg_line_right,
+        #     ],
+        #     color_override=Colors.GOLD_LIGHT,
+        # )
+        # overlay.draw_text(
+        #     f"Wiberg: {hip.metrics[3].value}",
+        #     landmarks.pel_r_o[0] - 100,
+        #     (landmarks.pel_r_i[1] + 80),
+        # )
 
     return overlay

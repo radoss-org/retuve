@@ -17,7 +17,6 @@ Metric: Tonnis Classification of DDH
 """
 
 import numpy as np
-
 from retuve.draw import Overlay
 from retuve.hip_xray.classes import HipDataXray, LandmarksXRay
 from retuve.hip_xray.utils import extend_line

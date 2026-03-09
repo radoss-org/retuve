@@ -37,6 +37,9 @@ class Metric2D:
     def __str__(self) -> str:
         return f"Metric2D(name={self.name}, value={self.value})"
 
+    def __repr__(self):
+        return self.__str__()
+
 
 class Metric3D:
     """
@@ -95,3 +98,9 @@ class Metric3D:
         """
 
         return ["Post", "Graf", "Ant", "Full"]
+
+    def __str__(self) -> str:
+        return f"Metric3D(name={self.name}, value={self.full})"
+
+    def __repr__(self):
+        return self.__str__()

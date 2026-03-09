@@ -20,7 +20,6 @@ import time
 from typing import List
 
 from numpy.typing import NDArray
-
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegFrameObjects
 from retuve.draw import draw_landmarks, resize_data_for_display
@@ -66,7 +65,7 @@ def draw_hips_xray(
         overlay = draw_ace(final_hip, overlay, config)
         overlay = draw_wiberg(final_hip, overlay, config)
         overlay = draw_ihdi(final_hip, overlay, config)
-        overlay = draw_tonnis(final_hip, overlay, config)
+        # overlay = draw_tonnis(final_hip, overlay, config)
 
         # Run any custom post-draw hooks after base drawing (standard signature)
         post_draw_funcs = getattr(config.hip, "post_draw_functions", []) or []
@@ -90,7 +89,7 @@ def draw_hips_xray(
         per_frame_funcs = getattr(config.hip, "per_frame_metric_functions", []) or []
         if not post_draw_funcs and per_frame_funcs:
             names = [
-                pf[0] if isinstance(pf, tuple) else getattr(pf, "__name__", "custom")
+                (pf[0] if isinstance(pf, tuple) else getattr(pf, "__name__", "custom"))
                 for pf in per_frame_funcs
             ]
             y = 10

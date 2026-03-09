@@ -114,6 +114,10 @@ def handle_bad_frames(hip_datas: HipDatasUS, config: Config) -> HipDatasUS:
     :return: HipDatasUS object.
     """
 
+    # NOTE: I do not like this
+    if getattr(hip_datas, "bad_frame_reasons", None) is not None:
+        return hip_datas
+
     if config.batch.hip_mode == HipMode.US2DSW:
         keep = [(True if hip.marked() else False) for hip in hip_datas]
     else:
@@ -149,7 +153,7 @@ def handle_bad_frames(hip_datas: HipDatasUS, config: Config) -> HipDatasUS:
 
         if bad_alpha(hip):
             hip_datas[i] = empty_hip
-            bad_frame_reasons[i] = "Alpha Angle Non-Sensical"
+            bad_frame_reasons[i] = "Alpha Angle Non-Sensical or 0"
             continue
 
         if not left_apex_line_flat(hip) and not config.hip.allow_irregular_illiums:
@@ -159,13 +163,13 @@ def handle_bad_frames(hip_datas: HipDatasUS, config: Config) -> HipDatasUS:
 
         if bad_coverage(hip, config):
             hip_datas[i] = empty_hip
-            bad_frame_reasons[i] = "Coverage Value Non-Sensical"
+            bad_frame_reasons[i] = "Coverage Value Non-Sensical or 0"
             continue
 
-        if apex_right_points_too_close(hip):
-            hip_datas[i] = empty_hip
-            bad_frame_reasons[i] = "Apex and Right Too Close"
-            continue
+        # if apex_right_points_too_close(hip):
+        #     hip_datas[i] = empty_hip
+        #     bad_frame_reasons[i] = "Apex and Right Too Close"
+        #     continue
 
     hip_datas.bad_frame_reasons = bad_frame_reasons
     return hip_datas

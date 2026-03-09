@@ -116,8 +116,8 @@ class LandmarksXRay:
                 self.pel_l_i,
                 self.pel_r_o,
                 self.pel_r_i,
-                self.fem_l,
-                self.fem_r,
+                # self.fem_l,
+                # self.fem_r,
                 self.h_point_l,
                 self.h_point_r,
             ]

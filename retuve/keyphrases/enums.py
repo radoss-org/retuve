@@ -190,3 +190,4 @@ class GrafSelectionMethod:
     MANUAL_FEATURES = "manual_features"
     OBJ_CLASSIFY = "obj_classify"
     MANUAL_FRAME = "manual_frame"
+    HANDLED_IN_CUSTOM_METRICS = "handled_in_custom_metrics"

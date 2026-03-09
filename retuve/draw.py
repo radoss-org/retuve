@@ -129,6 +129,10 @@ def resize_points_for_display(points, seg_frame_objs: SegFrameObjects):
     )
 
     for point in points:
+        if point is None:
+            final_points.append(None)
+            continue
+
         x, y = _calculate_new_coordinates(
             seg_frame_objs.img.shape[:2],
             final_image.shape[:2],
@@ -175,6 +179,8 @@ def resize_data_for_display(
 
             if seg_obj.midline is None:
                 continue
+
+            seg_obj.midline_moved_org = copy.deepcopy(seg_obj.midline_moved)
 
             for i, point in enumerate(seg_obj.midline_moved):
                 x, y = _calculate_new_coordinates(

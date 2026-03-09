@@ -171,6 +171,7 @@ class HipDataUS:
                 "metrics": [],
                 "keyphrase": config.name,
                 "dev_metrics": dev_metrics.json_dump(),
+                "recorded_error": str(self.recorded_error),
             }
 
         # Serialize Metric2D objects as strings for deterministic comparisons
@@ -179,6 +180,7 @@ class HipDataUS:
             "metrics": serialized_metrics,
             "keyphrase": config.name,
             "dev_metrics": dev_metrics.json_dump(),
+            "recorded_error": str(self.recorded_error),
         }
 
 

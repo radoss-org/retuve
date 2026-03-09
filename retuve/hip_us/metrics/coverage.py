@@ -17,9 +17,7 @@ Metric: Coverage
 """
 
 import numpy as np
-from networkx import diameter
 from radstract.math import smart_find_intersection
-
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegObject
 from retuve.hip_us.classes.general import HipDataUS, LandmarksUS
@@ -66,9 +64,10 @@ def find_cov_landmarks(
     if diameter_1 == 0 or diameter_2 == 0:
         return landmarks
 
-    # Reject frames with a non-circular femoral head
-    if abs((diameter_1 - diameter_2) / diameter_1) > 0.35:
-        return landmarks
+    if getattr(config.hip, "allow_neutral_femoral_heads", False) == False:
+        # Reject frames with a non-circular femoral head
+        if abs((diameter_1 - diameter_2) / diameter_1) > 0.35:
+            return landmarks
 
     diameter = diameter_2
 

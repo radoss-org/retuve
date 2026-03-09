@@ -21,7 +21,6 @@ We don't store them, so that the Retuve UI does not use them.
 """
 
 from radstract.data.dicom import DicomTypes
-
 from retuve.keyphrases.enums import MetricUS, OperationType
 
 from .config import base_config
