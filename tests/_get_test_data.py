@@ -44,8 +44,7 @@ from retuve.testdata import Cases, download_case
 # =======================
 # Before running this code, please read the following disclaimer carefully:
 
-print(
-    """
+print("""
 DISCLAIMER
 =======================
 Before running the test generation script, please read the following disclaimer carefully:
@@ -61,8 +60,7 @@ By running tests with this data, you agree to abide by the terms of the CC BY-NC
 If you do not agree to these terms, do not proceed with running these tests.
 
 Please type "yes" to confirm that you have read and agree to the terms of the CC BY-NC-SA 3.0 license.
-"""
-)
+""")
 
 if os.environ.get("RETUVE_DISABLE_WARNING") != "True":
     user_input = input(
