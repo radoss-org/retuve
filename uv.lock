@@ -2379,12 +2379,11 @@ wheels = [
 
 [[package]]
 name = "radstract"
-version = "1.0.1"
+version = "1.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "black" },
     { name = "importlib-metadata" },
-    { name = "licensecheck" },
     { name = "matplotlib" },
     { name = "nibabel" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -2399,6 +2398,7 @@ dependencies = [
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "pytest-xdist" },
+    { name = "requests" },
     { name = "scikit-image", version = "0.25.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-image", version = "0.26.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "simpleitk" },
@@ -2407,9 +2407,9 @@ dependencies = [
     { name = "vulture" },
     { name = "weasyprint" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/93/655105f5c925e2675ad6872f6ba0614e4e10423553e342facf67367ea283/radstract-1.0.1.tar.gz", hash = "sha256:1a8893201d5cd43e3f570d3ae944e02df5e22bb8bc60577589447b742ff9b1f0", size = 179524, upload-time = "2026-03-09T04:01:40.621Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/5b/67c4401b9d828a209af8b0c6a9cbeea01876cb335950c821f2e0c7d58250/radstract-1.0.2.tar.gz", hash = "sha256:05f5f5f966fbb5198f1a25a6cb13d8b29b0f0c19022be08bed88ade4d1805bee", size = 177396, upload-time = "2026-03-22T06:43:46.999Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/64/be/aeb55d4ce7d9864bc3e9ef1176d7896df592e6ff00951c1d6caee881801c/radstract-1.0.1-py3-none-any.whl", hash = "sha256:b26b5aa5ecc980d6090680e26b8ee96f21fece263a3a17794e38a82002bcd37d", size = 62467, upload-time = "2026-03-09T04:01:39.026Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/9a/312ba8118e51af25d7dcc10a385b7334e5ba881734252559946346e1be57/radstract-1.0.2-py3-none-any.whl", hash = "sha256:9e7c0a0033a565a0438240a5f369a05988caa5f8f71ae9174c00130d86e65dc0", size = 62466, upload-time = "2026-03-22T06:43:45.637Z" },
 ]
 
 [[package]]
@@ -2540,7 +2540,7 @@ requires-dist = [
     { name = "plotly", specifier = ">=6.3.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "radstract", specifier = ">=1.0.0" },
+    { name = "radstract", specifier = ">=1.0.2" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "scikit-learn", specifier = ">=1.7.1" },
     { name = "setuptools", specifier = ">=80.9.0" },
