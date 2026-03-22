@@ -14,16 +14,20 @@
 
 """
 This module contains the functions to run the retuve pipeline on a batch of
-files. It also has the functions used to make the CLI commands for running retuve
-on a single file or a batch of files.
+files. It also has the functions used to make the CLI commands for running
+retuve on a single file or a batch of files.
 """
 
+import copy
+import glob
 import json
-import multiprocessing
 import os
 import shutil
 import time
 import traceback
+
+import numpy as np
+import torch.multiprocessing as multiprocessing
 
 from retuve.funcs import retuve_run
 from retuve.keyphrases.config import Config
@@ -91,27 +95,45 @@ def run_single(
             retuve_result.image.save(f"{savedir}/{fileid}{Outputs.IMAGE}")
 
         if retuve_result.metrics and retuve_result.metrics.get("dev_metrics"):
-            ulogger.info("\n Dev Metrics: ", retuve_result.metrics["dev_metrics"])
+            ulogger.info("\n Dev Metrics: ",
+                         retuve_result.metrics["dev_metrics"])
 
         if retuve_result.video_clip is not None:
             retuve_result.video_clip.write_videofile(
                 f"{savedir}/{fileid}{Outputs.VIDEO_CLIP}",
             )
+            retuve_result.video_clip.close()
 
         if retuve_result.visual_3d is not None:
-            retuve_result.visual_3d.write_html(f"{savedir}/{fileid}{Outputs.VISUAL3D}")
+            retuve_result.visual_3d.write_html(
+                f"{savedir}/{fileid}{Outputs.VISUAL3D}")
 
-        # save the metrics to a file
+        if config.seg_export and hip_datas and hip_datas.nifti is not None:
+            hip_datas.nifti.save(f"{savedir}/{fileid}{Outputs.NIFTI}")
+
+        def convert_numpy_types(obj):
+            """Recursively convert NumPy types to native Python types."""
+            if isinstance(obj, dict):
+                return {k: convert_numpy_types(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy_types(item) for item in obj]
+            elif isinstance(obj, (np.floating, np.integer)):
+                return obj.item()
+            return obj
+
+        # At the write location:
         with open(f"{savedir}/{fileid}{Outputs.METRICS}", "w") as f:
-            f.write(json.dumps(retuve_result.metrics))
+            f.write(json.dumps(convert_numpy_types(retuve_result.metrics)))
 
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         e = traceback.format_exc()
         ulogger.error(f"Error processing file {file_name}: {e}")
         return e
 
 
-def run_batch(config: Config):
+def run_batch(config: Config, filter_func=None):
     """
     Run the retuve pipeline on a batch of files.
 
@@ -119,16 +141,22 @@ def run_batch(config: Config):
     """
     all_files = []
 
+    # Create a list of patterns with extensions
+    patterns = []
     for dataset in config.batch.datasets:
-        files = os.listdir(dataset)
+        for input_type in config.batch.input_types:
+            patterns.append(os.path.join(dataset, "**", f"*{input_type}"))
 
-        files = [
-            f"{dataset}/{file}"
-            for file in files
-            if any(file.endswith(input_type) for input_type in config.batch.input_types)
-        ]
-
+    # Use glob for each pattern
+    for pattern in patterns:
+        files = glob.glob(pattern, recursive=True)
         all_files.extend(files)
+
+    # Remove any duplicates if they exist
+    all_files = list(set(all_files))
+
+    if filter_func:
+        all_files = filter_func(all_files)
 
     start = time.time()
 
@@ -136,12 +164,24 @@ def run_batch(config: Config):
     if not os.path.exists(config.api.savedir):
         os.makedirs(config.api.savedir, exist_ok=True)
 
-    if not multiprocessing.get_start_method(allow_none=True):
-        multiprocessing.set_start_method("spawn", force=True)
+    errors = []
 
-    with multiprocessing.Pool(processes=config.batch.processes) as pool:
-        chunks = [(config, file, True) for file in all_files]
-        errors = pool.starmap(run_single, chunks)
+    if config.batch.debug:
+        all_files = sorted(all_files)
+        for i, file in enumerate(all_files):
+            print(f"\n{'='*60}")
+            print(f"Processing file {i+1}/{len(all_files)}: {file}")
+            print("=" * 60)
+
+            run_single(config, file, True)
+    else:
+        # Multiprocessing mode
+        if not multiprocessing.get_start_method(allow_none=True):
+            multiprocessing.set_start_method("spawn", force=True)
+
+        with multiprocessing.Pool(processes=config.batch.processes) as pool:
+            chunks = [(config, file, True) for file in all_files]
+            errors = pool.starmap(run_single, chunks)
 
     if any(error is not None for error in errors):
         already_processed = sum(
@@ -155,15 +195,15 @@ def run_batch(config: Config):
         ]
 
         for error in errors:
-            ulogger.info(error)
+            print(error)
 
-        ulogger.info(f"Errors: {len(errors)}")
-        ulogger.info(f"Already processed: {already_processed}")
+        print(f"Errors: {len(errors)}")
+        print(f"Already processed: {already_processed}")
 
     end = time.time()
 
     if len(all_files) == 0:
-        ulogger.info(
+        print(
             f"No files with types in {config.batch.input_types} "
             "found in the directory"
         )
@@ -171,16 +211,16 @@ def run_batch(config: Config):
 
     # convert to minutes and seconds
     minutes, seconds = divmod(end - start, 60)
-    ulogger.info(f"Time taken: {minutes:.0f}m {seconds:.0f}s")
+    print(f"Time taken: {minutes:.0f}m {seconds:.0f}s")
 
     # Half to ignore the .nii files
-    no_of_files = len(all_files) // 2
+    no_of_files = len(all_files)
 
     if no_of_files == 0:
         no_of_files = 1
 
     # Print average time per file
-    ulogger.info(f"Average time per file: {(end - start) / no_of_files:.2f}s")
+    print(f"Average time per file: {(end - start) / no_of_files:.2f}s")
 
     # Print number of files
-    ulogger.info(f"Number of files: {no_of_files}")
+    print(f"Number of files: {no_of_files}")
