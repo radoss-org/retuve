@@ -39,8 +39,7 @@ def database_init(db_path: str):
             cursor = conn.cursor()
 
             # Create the table if it doesn't exist
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS files (
                     file_id TEXT PRIMARY KEY,
                     state TEXT,
@@ -50,8 +49,7 @@ def database_init(db_path: str):
                     figure_url TEXT,
                     attempts INTEGER DEFAULT 0
                 )
-                """
-            )
+                """)
             conn.commit()
 
 
