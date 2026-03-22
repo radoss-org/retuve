@@ -30,7 +30,8 @@ dependencies = [
     "urllib3>=2.5.0",
     "requests>=2.32.4",
     "plotly>=6.3.0",
-    "kaleido>=1.0.0"
+    "kaleido>=1.0.0",
+    "attrs>=25.0.1",
 ]
 
 [build-system]
