@@ -142,9 +142,13 @@ uv sync
 
 # Generate the test data
 uv run poe testgen
+# To get plugins if testing external examples
+uv run poe testgetplugins
 
 # Run all tests, including examples.
 uv run poe test_all
+
+
 
 # Get info on all other dev scripts
 uv run poe help
