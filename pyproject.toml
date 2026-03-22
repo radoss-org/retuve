@@ -8,7 +8,7 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "radstract>=1.0.0",
+    "radstract>=1.0.2",
     "fire>=0.7.0",
     "moviepy>=2.2.1",
     "open3d>=0.19.0",
@@ -31,6 +31,8 @@ dependencies = [
     "requests>=2.32.4",
     "plotly>=6.3.0",
     "kaleido>=1.0.0",
+    "attrs>=25.0.1",
+    "pip>=26.0.1",
 ]
 
 [build-system]
@@ -50,12 +52,10 @@ dev-dependencies = [
     "poethepoet>=0.20.0",
     "vulture>=2.0.0",
     "pdoc>=14.0.0",
-    "licensecheck>=3.0.0",
 ]
 
 [tool.poe.tasks]
 # Under BSD: https://www.creatis.insa-lyon.fr/software/public/Gdcm/License.html
-license = "licensecheck --ignore-packages=gdcm"
 testcap = "pytest -vv --cov=retuve --durations=5 --capture-errors ./tests/unit"
 test = "pytest -vv -n 4 --cov=retuve --durations=5 ./tests"
 test_unit = "pytest -vv -n 4 --cov=retuve --durations=5 ./tests/unit"
@@ -84,7 +84,6 @@ help_real.shell = """
     echo Retuve Script Help
     echo ==================
     echo
-    echo "poe license" - Check the license of the project
     echo "poe test" - Run the unit tests
     echo "poe test_intergration" - Run the intergration tests
     echo "poe test_all" - Run all the tests

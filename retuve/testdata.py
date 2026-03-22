@@ -36,8 +36,7 @@ def download_case(*args, disable_warning=False, **kwargs):
     if disable_warning:
         return download_case_radstract(*args, **kwargs)
 
-    print(
-        """
+    print("""
     DISCLAIMER
     =======================
     Before running any examples, please read the following disclaimer carefully:
@@ -53,8 +52,7 @@ def download_case(*args, disable_warning=False, **kwargs):
     If you do not agree to these terms, do not proceed with running these examples.
 
     Please type "yes" to confirm that you have read and agree to the terms of the CC BY-NC-SA 3.0 license.
-    """
-    )
+    """)
 
     user_input = input(
         "Do you agree to the terms of the CC BY-NC-SA 3.0 license? (Type 'yes' to continue): "
