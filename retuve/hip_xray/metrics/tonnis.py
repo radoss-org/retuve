@@ -17,7 +17,6 @@ Metric: Tonnis Classification of DDH
 """
 
 import numpy as np
-
 from retuve.draw import Overlay
 from retuve.hip_xray.classes import HipDataXray, LandmarksXRay
 from retuve.hip_xray.utils import extend_line
@@ -82,7 +81,17 @@ def find_tonnis(landmarks: LandmarksXRay) -> tuple[int, int]:
             landmarks.pel_l_i,
             landmarks.pel_r_i,
             landmarks.pel_r_o,
+            landmarks.fem_l,
+            landmarks.fem_r,
         ]
+    ):
+        return 0, 0
+
+    if np.any(
+        (
+            landmarks.fem_l == landmarks.pel_l_i,
+            landmarks.fem_r == landmarks.pel_r_i,
+        )
     ):
         return 0, 0
 
@@ -148,6 +157,14 @@ def draw_tonnis(hip: HipDataXray, overlay: Overlay, config: Config):
             landmarks.pel_r_i,
             landmarks.pel_r_o,
         ]
+    ):
+        return overlay
+
+    if np.any(
+        (
+            landmarks.fem_l == landmarks.pel_l_i,
+            landmarks.fem_r == landmarks.pel_r_i,
+        )
     ):
         return overlay
 

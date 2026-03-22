@@ -20,7 +20,6 @@ import time
 from typing import List
 
 from numpy.typing import NDArray
-
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegFrameObjects
 from retuve.draw import draw_landmarks, resize_data_for_display
@@ -58,8 +57,6 @@ def draw_hips_xray(
         )
 
         overlay = Overlay((final_image.shape[0], final_image.shape[1], 3), config)
-
-        # overlay = draw_seg(final_seg_frame_objs, overlay, config)
 
         overlay = draw_landmarks(final_hip, overlay, override_line_thickness=6)
 
