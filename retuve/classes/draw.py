@@ -114,7 +114,10 @@ class Overlay:
             return image
 
         image = Image.fromarray(image)
-        draw = ImageDraw.Draw(image, "RGBA")
+
+        if image.mode != "RGBA":
+            image = image.convert("RGBA")
+        draw = ImageDraw.Draw(image)
 
         # Execute all stored operations
         # go in order of segs, lines, points, text
@@ -142,7 +145,6 @@ class Overlay:
         :return: Image with segmentation overlay.
         """
 
-        # Create empty frame of write shape
         seg_overlay = Image.new("RGB", shape[:2], (0, 0, 0))
         draw = ImageDraw.Draw(seg_overlay)
 
