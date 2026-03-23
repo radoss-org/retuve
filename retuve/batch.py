@@ -26,6 +26,7 @@ import time
 import traceback
 
 import numpy as np
+
 try:
     import torch.multiprocessing as multiprocessing
 except ImportError:
@@ -96,8 +97,7 @@ def run_single(
             retuve_result.image.save(f"{savedir}/{fileid}{Outputs.IMAGE}")
 
         if retuve_result.metrics and retuve_result.metrics.get("dev_metrics"):
-            print("\n Dev Metrics: ",
-                  retuve_result.metrics["dev_metrics"])
+            print("\n Dev Metrics: ", retuve_result.metrics["dev_metrics"])
 
         if retuve_result.video_clip is not None:
             retuve_result.video_clip.write_videofile(
@@ -106,8 +106,7 @@ def run_single(
             retuve_result.video_clip.close()
 
         if retuve_result.visual_3d is not None:
-            retuve_result.visual_3d.write_html(
-                f"{savedir}/{fileid}{Outputs.VISUAL3D}")
+            retuve_result.visual_3d.write_html(f"{savedir}/{fileid}{Outputs.VISUAL3D}")
 
         if config.seg_export and hip_datas and hip_datas.nifti is not None:
             hip_datas.nifti.save(f"{savedir}/{fileid}{Outputs.NIFTI}")

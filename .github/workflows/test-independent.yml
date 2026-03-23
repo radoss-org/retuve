@@ -70,11 +70,3 @@ jobs:
         sudo rm -rf tmp/*
         uv run poe test_intergration
         uv run poe test_unit
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }} # Set this in your repository secrets
-        files: coverage.xml
-        name: code-coverage-report
-        fail_ci_if_error: true
