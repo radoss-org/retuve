@@ -140,7 +140,6 @@ class Overlay:
         :return: Image with segmentation overlay.
         """
 
-        # Create empty frame of write shape
         seg_overlay = Image.new("RGB", shape[:2], (0, 0, 0))
         draw = ImageDraw.Draw(seg_overlay)
 
