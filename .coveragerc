@@ -1,0 +1,8 @@
+[run]
+branch = True
+parallel = True
+data_file = tests/.coverage
+concurrency = multiprocessing
+sigterm = True
+source =
+    retuve

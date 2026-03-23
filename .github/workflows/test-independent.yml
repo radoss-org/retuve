@@ -1,0 +1,81 @@
+name: Test Retuve without Plugins
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_call:
+    inputs:
+      needs_build:
+        type: boolean
+        default: false
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    env:
+      RETUVE_DISABLE_WARNING: "True"
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.10
+
+    - name: Restore uv cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Check code formatting with black
+      run: |
+        uv run poe format --check
+
+    - name: Get Chrome
+      run: |
+        uv run kaleido_get_chrome
+
+    - name: Generate test data and check for no changes
+      run: |
+        # Use a temporary file to capture output while also displaying it
+        uv run poe testgen 2>&1 | tee temp_output.txt
+        output=$(cat temp_output.txt)
+        rm temp_output.txt
+        if ! echo "$output" | grep -q "No changes detected; no new release note created."; then
+          echo "ERROR: Changes were detected in test data generation. This suggests code changes may have affected output."
+          echo "Please review the changes and ensure they are intentional."
+          exit 1
+        fi
+        echo "SUCCESS: No changes detected in test data generation."
+
+    - name: Run tests
+      run: |
+        sudo rm -rf tmp/*
+        uv run poe test_intergration
+        uv run poe test_unit
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} # Set this in your repository secrets
+        files: coverage.xml
+        name: code-coverage-report
+        fail_ci_if_error: true
