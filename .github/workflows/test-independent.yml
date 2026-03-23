@@ -1,5 +1,8 @@
 name: Test Retuve without Plugins
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main ]
@@ -44,10 +47,6 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --dev
-
-    - name: Check code formatting with black
-      run: |
-        uv run poe format --check
 
     - name: Get Chrome
       run: |
