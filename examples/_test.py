@@ -66,8 +66,7 @@ for i, (script_path, module_dir) in enumerate(scripts):
                 )
 
             except subprocess.CalledProcessError as e:
-                pytest.fail(
-                    f"Script failed: {script_path}\nError message: {e}")
+                pytest.fail(f"Script failed: {script_path}\nError message: {e}")
 
             finally:
                 # Capture the state of the directory after the script runs
