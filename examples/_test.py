@@ -59,10 +59,15 @@ for i, (script_path, module_dir) in enumerate(scripts):
                 env["COVERAGE_PROCESS_START"] = os.path.abspath(".coveragerc")
 
                 # Run the script
-                subprocess.run(["python", script_path], check=True, env=env)
+                subprocess.run(
+                    ["coverage", "run", "--parallel-mode", script_path],
+                    check=True,
+                    env=env,
+                )
 
             except subprocess.CalledProcessError as e:
-                pytest.fail(f"Script failed: {script_path}\nError message: {e}")
+                pytest.fail(
+                    f"Script failed: {script_path}\nError message: {e}")
 
             finally:
                 # Capture the state of the directory after the script runs
