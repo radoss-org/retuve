@@ -158,19 +158,21 @@ class HipDataXray:
         self.frame_no: int = None
         self.recorded_error: RecordedError = RecordedError()
 
-    def get_metric(self, name: str):
+    def get_metric(self, name: str) -> float:
         """
         Returns the value of a metric by its name, or 0 if not found.
         """
         if not self.metrics:
-            return 0
+            return 0.0
         for metric in self.metrics:
-            try:
-                if metric and metric.name == name:
-                    return metric.value
-            except Exception:
-                continue
-        return 0
+            if (
+                metric
+                and isinstance(metric, Metric2D)
+                and getattr(metric, "name", None) == name
+            ):
+                # Assume Metric2D.value is numeric; cast to float for consistency.
+                return float(metric.value)
+        return 0.0
 
     def json_dump(self, config, dev_metrics: DevMetricsXRay) -> Dict[str, Any]:
         return {
