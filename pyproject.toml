@@ -42,6 +42,9 @@ build-backend = "hatchling.build"
 [tool.coverage.run]
 # Specify the directory and filename for the coverage data
 data_file = "tests/.coverage"
+parallel = true
+concurrency = ["multiprocessing"]
+sigterm = true
 
 [tool.uv]
 dev-dependencies = [
@@ -60,7 +63,11 @@ testcap = "pytest -vv --cov=retuve --durations=5 --capture-errors ./tests/unit"
 test = "pytest -vv -n 4 --cov=retuve --durations=5 ./tests"
 test_unit = "pytest -vv -n 4 --cov=retuve --durations=5 ./tests/unit"
 test_intergration = "pytest -vv -n 4 --cov=retuve --durations=5 ./tests/intergration"
-test_all = "pytest -vv -n 4 --cov=retuve --cov-branch --cov-report=xml --dist=loadgroup --durations=5 ./examples/_test.py ./tests"
+test_all.shell = """
+export COVERAGE_PROCESS_START=$PWD/.coveragerc
+export PYTHONPATH=$PWD/tests:$PYTHONPATH
+pytest -vv -n 4 --cov=retuve --cov-branch --dist=loadgroup --durations=5 ./examples/_test.py ./tests --cov-report=xml
+"""
 deadcode = "vulture retuve ./scripts/whitelist.py"
 copiedcode = [{ cmd = "sudo npm install -g jscpd" }, { cmd = "jscpd retuve" }]
 linecount = [
