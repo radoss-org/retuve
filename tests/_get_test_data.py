@@ -172,7 +172,8 @@ visual_3d.write_html(f"{test_data_dir}/visual_3d_us.html")
 
 
 # Example usage
-img_file, labels_json = download_case(Cases.XRAY_JPG, directory="./tests/test-data")
+img_file, labels_json = download_case(
+    Cases.XRAY_JPG, directory="./tests/test-data")
 
 img_raw = Image.open(img_file)
 labels = json.load(open(labels_json))
@@ -248,19 +249,29 @@ def load_previous_release_note():
     return None, None
 
 
+def normalize_numbers(obj):
+    if isinstance(obj, dict):
+        return {k: normalize_numbers(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [normalize_numbers(v) for v in obj]
+    if isinstance(obj, float) and obj.is_integer():
+        return int(obj)
+    return obj
+
+
 def has_changes(new_data, old_data):
-    # Change recorded error to None in both if "" or None
+    new_data = normalize_numbers(new_data)
+    old_data = normalize_numbers(old_data)
+
     if new_data["3dus"]["recorded_error"] in ["", None]:
         new_data["3dus"]["recorded_error"] = None
     if old_data["3dus"]["recorded_error"] in ["", None]:
         old_data["3dus"]["recorded_error"] = None
 
-    # Compare for changes as JSON's
     changes = json.dumps(new_data, sort_keys=True) != json.dumps(
         old_data, sort_keys=True
     )
 
-    # Print diff
     if changes:
         diff = unified_diff(
             json.dumps(old_data, indent=4).splitlines(),
@@ -278,7 +289,8 @@ def mark_changes(new_data, old_data, path=""):
         for key in new_data.keys():
             full_path = f"{path}.{key}" if path else key
             if key in old_data:
-                new_data[key] = mark_changes(new_data[key], old_data[key], full_path)
+                new_data[key] = mark_changes(
+                    new_data[key], old_data[key], full_path)
             else:
                 # Key is new, mark it as added
                 new_data[key] = f"{new_data[key]}  # Added"
@@ -286,7 +298,8 @@ def mark_changes(new_data, old_data, path=""):
         # Compare lists by index
         for i in range(len(new_data)):
             if i < len(old_data):
-                new_data[i] = mark_changes(new_data[i], old_data[i], f"{path}[{i}]")
+                new_data[i] = mark_changes(
+                    new_data[i], old_data[i], f"{path}[{i}]")
             else:
                 # Item is new in the list
                 new_data[i] = f"{new_data[i]}  # Added"
@@ -342,7 +355,8 @@ if previous_data is None or has_changes(
     with open(new_filename, "r") as f:
         content = f.read()
         content = content.replace("'", "")
-        content = content.replace("recorded_error:   # Modified", "recorded_error: ''")
+        content = content.replace(
+            "recorded_error:   # Modified", "recorded_error: ''")
     with open(new_filename, "w") as f:
         f.write(content)
 
