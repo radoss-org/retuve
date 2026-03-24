@@ -28,9 +28,6 @@ from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Colors
 from scipy.spatial import KDTree
 
-# No midline curve will ever be more complex than this
-POLY_DEGREE = 5
-
 
 class DrawTypes(Enum):
     """
@@ -80,7 +77,7 @@ class DrawTypes(Enum):
         elif dtype == cls.POINTS:
             return draw.line
         elif dtype == cls.SKEL:
-            return draw.point
+            return draw.line
         elif dtype == cls.CIRCLE:
             return draw.ellipse
         elif dtype == cls.RECTANGLE:
@@ -154,7 +151,8 @@ class Overlay:
             if not seg_obj.empty:
                 draw.polygon(
                     seg_obj.points,
-                    fill=LabelColours.get_color_from_index(seg_obj.cls.value + 1),
+                    fill=LabelColours.get_color_from_index(
+                        seg_obj.cls.value + 1),
                 )
 
         return seg_overlay
@@ -193,7 +191,8 @@ class Overlay:
         self.add_operation(
             DrawTypes.SEGS,
             points,
-            fill=self.config.visuals.seg_color.rgba(self.config.visuals.seg_alpha),
+            fill=self.config.visuals.seg_color.rgba(
+                self.config.visuals.seg_alpha),
         )
 
     def draw_box(self, box: Tuple[int, int, int, int], grafs: bool = False):
@@ -259,7 +258,7 @@ class Overlay:
             y1, x1 = skel[ordered[i]]
             y2, x2 = skel[ordered[i + 1]]
             self.add_operation(
-                DrawTypes.LINES,
+                DrawTypes.SKEL,
                 [(x1, y1), (x2, y2)],
                 fill=self.config.hip.midline_color.rgba(),
                 width=3,
