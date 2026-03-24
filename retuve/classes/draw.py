@@ -153,8 +153,7 @@ class Overlay:
             if not seg_obj.empty:
                 draw.polygon(
                     seg_obj.points,
-                    fill=LabelColours.get_color_from_index(
-                        seg_obj.cls.value + 1),
+                    fill=LabelColours.get_color_from_index(seg_obj.cls.value + 1),
                 )
 
         return seg_overlay
@@ -193,8 +192,7 @@ class Overlay:
         self.add_operation(
             DrawTypes.SEGS,
             points,
-            fill=self.config.visuals.seg_color.rgba(
-                self.config.visuals.seg_alpha),
+            fill=self.config.visuals.seg_color.rgba(self.config.visuals.seg_alpha),
         )
 
     def draw_box(self, box: Tuple[int, int, int, int], grafs: bool = False):
