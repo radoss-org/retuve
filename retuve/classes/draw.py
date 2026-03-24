@@ -22,10 +22,11 @@ from typing import List, Literal, Optional, Tuple
 import numpy as np
 from PIL import Image, ImageDraw
 from radstract.data.colors import LabelColours
-
 from retuve.classes.seg import SegFrameObjects
+from retuve.hip_us.classes.general import LandmarksUS
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Colors
+from scipy.spatial import KDTree
 
 
 class DrawTypes(Enum):
@@ -76,7 +77,7 @@ class DrawTypes(Enum):
         elif dtype == cls.POINTS:
             return draw.line
         elif dtype == cls.SKEL:
-            return draw.point
+            return draw.line
         elif dtype == cls.CIRCLE:
             return draw.ellipse
         elif dtype == cls.RECTANGLE:
@@ -222,17 +223,45 @@ class Overlay:
 
     def draw_skeleton(self, skel: List[Tuple[int, int]]):
         """
-        Draws a skeleton on the overlay.
-
-        :param skel: List of points to draw the skeleton.
+        Draws a skeleton on the overlay by connecting the closest points
+        with lines, starting from the leftmost point.
         """
+        if len(skel) <= 1:
+            return
 
-        for point in skel:
-            y, x = point
+        points = np.array(skel)  # shape (n, 2) as (y, x)
+        tree = KDTree(points)
+
+        # Start with the leftmost (smallest x) point
+        current_idx = np.argmin(points[:, 1])
+        ordered = [current_idx]
+        visited = np.zeros(len(points), dtype=bool)
+        visited[current_idx] = True
+
+        for _ in range(len(points) - 1):
+            # Find nearest unvisited neighbor
+            dist, idx = tree.query(
+                points[current_idx],
+                k=len(points),  # get all possible neighbors
+            )
+            # pick the first unvisited neighbor
+            for ni in idx:
+                if not visited[ni]:
+                    next_idx = ni
+                    break
+            ordered.append(next_idx)
+            visited[next_idx] = True
+            current_idx = next_idx
+
+        # Draw lines between consecutive points
+        for i in range(len(ordered) - 1):
+            y1, x1 = skel[ordered[i]]
+            y2, x2 = skel[ordered[i + 1]]
             self.add_operation(
                 DrawTypes.SKEL,
-                (x, y),
+                [(x1, y1), (x2, y2)],
                 fill=self.config.hip.midline_color.rgba(),
+                width=3,
             )
 
     def draw_lines(
@@ -246,6 +275,18 @@ class Overlay:
         :param line_points: List of tuples of points to draw lines between.
 
         """
+
+        if type(line_points[0][0]) == LandmarksUS:
+            new_line_points = []
+            for line in line_points:
+                for landmark1, landmark2 in line:
+                    new_line_points.append(
+                        [
+                            (landmark1[0], landmark1[1]),
+                            (landmark2[0], landmark2[1]),
+                        ]
+                    )
+            line_points = new_line_points
 
         if color_override:
             color = color_override
