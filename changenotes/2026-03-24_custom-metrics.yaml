@@ -2,7 +2,6 @@ description: |
   Minimal modifications as part of large custom metrics re-write:
   - Removed "apex to close" bad frame reason
   - Centering Ratio based on https://files.mcaq.me/a6jj5.png
-
 current_output:
   3dus:
     metrics:
