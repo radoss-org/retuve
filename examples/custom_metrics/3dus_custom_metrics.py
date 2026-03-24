@@ -32,7 +32,6 @@ from retuve.defaults.manual_seg import manual_predict_us_dcm
 from retuve.funcs import analyse_hip_3DUS
 from retuve.testdata import Cases, download_case
 
-
 # --- Custom metrics and draw functions -------------------------------------
 
 
@@ -65,8 +64,7 @@ def draw_seg_count_on_graf(hip, overlay, config):
         if hip.side != Side.GRAF:
             return overlay
         count = hip.get_metric("seg object count") or 0
-        overlay.draw_text(f"count: {int(count)}",
-                          20, 20, header="h2", grafs=True)
+        overlay.draw_text(f"count: {int(count)}", 20, 20, header="h2", grafs=True)
     except Exception:
         pass
     return overlay
@@ -81,8 +79,7 @@ custom_3dus.hip.full_metric_functions = [
 custom_3dus.hip.per_frame_metric_functions = [
     ("seg object count", seg_object_count_metric)
 ]
-custom_3dus.hip.post_draw_functions = [
-    ("us seg count on graf", draw_seg_count_on_graf)]
+custom_3dus.hip.post_draw_functions = [("us seg count on graf", draw_seg_count_on_graf)]
 
 
 # --- Run the pipeline -------------------------------------------------------

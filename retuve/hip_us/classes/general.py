@@ -177,8 +177,7 @@ class HipDataUS:
             }
 
         # Serialize Metric2D objects as strings for deterministic comparisons
-        serialized_metrics = [{metric.name: metric.value}
-                              for metric in self.metrics]
+        serialized_metrics = [{metric.name: metric.value} for metric in self.metrics]
         return {
             "metrics": serialized_metrics,
             "keyphrase": config.name,

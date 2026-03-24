@@ -55,7 +55,11 @@ from retuve.keyphrases.config import Config, OperationType
 from retuve.keyphrases.enums import HipMode
 from retuve.logs import ulogger
 from retuve.typehints import GeneralModeFuncType
-from retuve.custom import get_all_custom_metrics, get_per_frame_xray
+from retuve.custom import (
+    custom_seg_preprocessing,
+    get_all_custom_metrics,
+    get_per_frame_xray,
+)
 
 
 def get_fps(no_of_frames: int, min_fps=30, min_vid_length=6) -> int:
@@ -124,12 +128,28 @@ def process_segs_us(
     :return: The hip datas, the results, and the shape.
     """
 
-    results: List[SegFrameObjects] = modes_func(
-        file, config, **modes_func_kwargs_dict)
+    results: List[SegFrameObjects] = modes_func(file, config, **modes_func_kwargs_dict)
     results, shape = pre_process_segs_us(results, config)
 
-    hip_datas, pre_edited_results, pre_edited_landmarks = get_all_custom_metrics(
-        results, shape, config, called_by_2dus=called_by_2dus)
+    results = custom_seg_preprocessing(results, shape, config)
+
+    if config.test_data_passthrough:
+        pre_edited_results = copy.deepcopy(results)
+
+    landmarks, all_seg_rejection_reasons, ilium_angle_baselines = segs_2_landmarks_us(
+        results, config
+    )
+
+    if config.test_data_passthrough:
+        pre_edited_landmarks = copy.deepcopy(landmarks)
+
+    hip_datas = landmarks_2_metrics_us(landmarks, shape, config)
+    hip_datas.all_seg_rejection_reasons = all_seg_rejection_reasons
+    hip_datas.ilium_angle_baselines = ilium_angle_baselines
+
+    hip_datas = get_all_custom_metrics(
+        hip_datas, results, config, called_by_2dus=called_by_2dus
+    )
 
     if config.test_data_passthrough:
         hip_datas.pre_edited_results = pre_edited_results
@@ -168,8 +188,7 @@ def analyse_hip_xray_2D(
     elif isinstance(img, Image.Image):
         data = [img]
     else:
-        raise ValueError(
-            f"Invalid image type: {type(img)}. Expected Image or DICOM.")
+        raise ValueError(f"Invalid image type: {type(img)}. Expected Image or DICOM.")
 
     if config.operation_type in OperationType.LANDMARK:
         landmark_results, seg_results = modes_func(
@@ -487,10 +506,8 @@ def analyse_hip_2DUS_sweep(
                 graf_image = min(
                     marked_pairs,
                     key=lambda pair: (
-                        abs(pair[0].landmarks.left[1] -
-                            pair[0].landmarks.apex[1]),
-                        -abs(pair[0].landmarks.apex[0] -
-                             pair[0].landmarks.left[0]),
+                        abs(pair[0].landmarks.left[1] - pair[0].landmarks.apex[1]),
+                        -abs(pair[0].landmarks.apex[0] - pair[0].landmarks.left[0]),
                     ),
                 )[1]
 

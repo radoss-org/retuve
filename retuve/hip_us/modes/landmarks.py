@@ -39,7 +39,10 @@ def _polyfit_replace_apex(
     pts = [
         (i, float(x), float(y))
         for i, lm in enumerate(list_landmarks)
-        if lm and lm.apex is not None and lm.apex[0] is not None and lm.apex[1] is not None
+        if lm
+        and lm.apex is not None
+        and lm.apex[0] is not None
+        and lm.apex[1] is not None
         for x, y in [lm.apex]
     ]
 

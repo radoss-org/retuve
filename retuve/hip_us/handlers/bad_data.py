@@ -47,7 +47,7 @@ def remove_outliers(hip_datas: HipDatasUS, config: Config) -> List[bool]:
     max_true_index = 0
 
     for i in range(len(pred_made) - total_true + 1):
-        current_window_true = sum(pred_made[i: i + total_true])
+        current_window_true = sum(pred_made[i : i + total_true])
         if current_window_true > max_true:
             max_true = current_window_true
             max_true_index = i
@@ -99,8 +99,7 @@ def apex_right_points_too_close(hip: HipDataUS) -> bool:
         return True
 
     return (
-        np.linalg.norm(np.array(hip.landmarks.right) -
-                       np.array(hip.landmarks.apex))
+        np.linalg.norm(np.array(hip.landmarks.right) - np.array(hip.landmarks.apex))
         < 30
     )
 

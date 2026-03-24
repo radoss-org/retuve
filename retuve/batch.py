@@ -106,8 +106,7 @@ def run_single(
             retuve_result.video_clip.close()
 
         if retuve_result.visual_3d is not None:
-            retuve_result.visual_3d.write_html(
-                f"{savedir}/{fileid}{Outputs.VISUAL3D}")
+            retuve_result.visual_3d.write_html(f"{savedir}/{fileid}{Outputs.VISUAL3D}")
 
         if config.seg_export and hip_datas and hip_datas.nifti is not None:
             hip_datas.nifti.save(f"{savedir}/{fileid}{Outputs.NIFTI}")

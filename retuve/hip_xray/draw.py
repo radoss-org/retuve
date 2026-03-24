@@ -57,8 +57,7 @@ def draw_hips_xray(
             hip, seg_frame_objs
         )
 
-        overlay = Overlay(
-            (final_image.shape[0], final_image.shape[1], 3), config)
+        overlay = Overlay((final_image.shape[0], final_image.shape[1], 3), config)
 
         overlay = draw_landmarks(final_hip, overlay, override_line_thickness=6)
 

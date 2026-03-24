@@ -158,8 +158,7 @@ def rotate_in_place(p1, p2, angle_deg=45):
     """
     v = np.array(p2) - np.array(p1)
     theta = np.deg2rad(angle_deg)
-    rot = np.array([[np.cos(theta), -np.sin(theta)],
-                   [np.sin(theta), np.cos(theta)]])
+    rot = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
     p2_rot = np.array(p1) + rot @ v
     return p1, p2_rot
 

@@ -34,7 +34,6 @@ from retuve.defaults.manual_seg import manual_predict_us
 from retuve.funcs import analyse_hip_2DUS
 from retuve.testdata import Cases, download_case
 
-
 # --- Custom metric and draw functions --------------------------------------
 
 

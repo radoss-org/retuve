@@ -38,7 +38,6 @@ from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import MetricUS
 from retuve.logs import ulogger
 from retuve.utils import rmean
-from retuve.custom import get_per_frame_3dus_metrics
 
 
 class FemSphere:
@@ -159,8 +158,6 @@ def get_3d_metrics_and_visuals(
                 )
             )
 
-    hip_datas = get_per_frame_3dus_metrics(hip_datas, config)
-
     if all(metric.post == 0 for metric in hip_datas.metrics):
         hip_datas.recorded_error.append("No Posterior values recorded.")
         hip_datas.recorded_error.critical = True
@@ -174,8 +171,7 @@ def get_3d_metrics_and_visuals(
     else:
         fem_sph = None
 
-    ulogger.info(
-        f"Time for all 3D Elements: {round(time.time() - start, 2)} s")
+    ulogger.info(f"Time for all 3D Elements: {round(time.time() - start, 2)} s")
 
     return (
         hip_datas,

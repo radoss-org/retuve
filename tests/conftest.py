@@ -234,8 +234,7 @@ def config_xray() -> Config:
 def img_2dus_custom_np() -> np.ndarray:
     """Load the 2DUS image with custom post-draw annot (numpy array)."""
     path = "tests/test-data/img_2dus_custom.jpg"
-    assert os.path.exists(
-        path), "Custom 2DUS image not found. Run `poe testgen`."
+    assert os.path.exists(path), "Custom 2DUS image not found. Run `poe testgen`."
     return np.array(Image.open(path))
 
 
@@ -243,8 +242,7 @@ def img_2dus_custom_np() -> np.ndarray:
 def img_xray_custom_np() -> np.ndarray:
     """Load the X-ray image with custom post-draw annot (numpy array)."""
     path = "tests/test-data/img_xray_custom.jpg"
-    assert os.path.exists(
-        path), "Custom X-ray image not found. Run `poe testgen`."
+    assert os.path.exists(path), "Custom X-ray image not found. Run `poe testgen`."
     return np.array(Image.open(path))
 
 
@@ -252,8 +250,7 @@ def img_xray_custom_np() -> np.ndarray:
 def img_3dus_custom_np() -> np.ndarray:
     """Load the 3DUS Graf-frame image with custom post-draw annot (numpy array)."""
     path = "tests/test-data/img_3dus_custom.jpg"
-    assert os.path.exists(
-        path), "Custom 3DUS image not found. Run `poe testgen`."
+    assert os.path.exists(path), "Custom 3DUS image not found. Run `poe testgen`."
     return np.array(Image.open(path))
 
 

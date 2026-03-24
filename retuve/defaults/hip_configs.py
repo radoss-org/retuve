@@ -73,8 +73,7 @@ def _draw_us_seg_count(hip, seg_frame_objs, overlay, config):
 test_default_US_custom.hip.per_frame_metric_functions = [
     ("seg object count", _seg_object_count)
 ]
-test_default_US_custom.hip.post_draw_functions = [
-    ("us seg count", _draw_us_seg_count)]
+test_default_US_custom.hip.post_draw_functions = [("us seg count", _draw_us_seg_count)]
 
 test_default_xray_custom = default_xray.get_copy()
 
@@ -97,11 +96,9 @@ def draw_xray_count(hip, seg_frame_objs, overlay, config):
         count = hip.get_metric("landmark count")
         if not count:
             lm = hip.landmarks
-            count = sum(1 for v in vars(lm).values()
-                        if v is not None) if lm else 0
+            count = sum(1 for v in vars(lm).values() if v is not None) if lm else 0
         # Use graf colors for stronger contrast on x-ray
-        overlay.draw_text(f"count: {int(count)}",
-                          10, 10, header="h1", grafs=True)
+        overlay.draw_text(f"count: {int(count)}", 10, 10, header="h1", grafs=True)
     except Exception:
         pass
     return overlay
@@ -142,8 +139,7 @@ def _draw_seg_count_on_graf(hip, seg_frame_objs, overlay, config):
         if hip.side != Side.GRAF:
             return overlay
         count = hip.get_metric("seg object count") or 0
-        overlay.draw_text(f"count: {int(count)}",
-                          20, 20, header="h2", grafs=True)
+        overlay.draw_text(f"count: {int(count)}", 20, 20, header="h2", grafs=True)
     except Exception:
         pass
     return overlay

@@ -76,8 +76,7 @@ def find_wiberg(landmarks: LandmarksXRay) -> tuple[float, float]:
             landmarks.h_point_r,
         )
 
-        wiberg_index_right = angle_between_lines(
-            P_line_right, wiberg_line_right)
+        wiberg_index_right = angle_between_lines(P_line_right, wiberg_line_right)
 
     wiberg_index_left = round(wiberg_index_left, 1)
     wiberg_index_right = round(wiberg_index_right, 1)
