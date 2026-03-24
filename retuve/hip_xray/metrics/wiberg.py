@@ -125,7 +125,7 @@ def draw_wiberg(hip: HipDataXray, overlay: Overlay, config: Config):
             [
                 new_P_line_left,
             ],
-            color_override=Colors.RED,
+            color_override=Colors.WHITE,
         )
         overlay.draw_lines(
             [
@@ -158,7 +158,7 @@ def draw_wiberg(hip: HipDataXray, overlay: Overlay, config: Config):
             [
                 new_P_line_right,
             ],
-            color_override=Colors.RED,
+            color_override=Colors.WHITE,
         )
         overlay.draw_lines(
             [

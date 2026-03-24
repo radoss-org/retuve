@@ -248,19 +248,29 @@ def load_previous_release_note():
     return None, None
 
 
+def normalize_numbers(obj):
+    if isinstance(obj, dict):
+        return {k: normalize_numbers(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [normalize_numbers(v) for v in obj]
+    if isinstance(obj, float) and obj.is_integer():
+        return int(obj)
+    return obj
+
+
 def has_changes(new_data, old_data):
-    # Change recorded error to None in both if "" or None
+    new_data = normalize_numbers(new_data)
+    old_data = normalize_numbers(old_data)
+
     if new_data["3dus"]["recorded_error"] in ["", None]:
         new_data["3dus"]["recorded_error"] = None
     if old_data["3dus"]["recorded_error"] in ["", None]:
         old_data["3dus"]["recorded_error"] = None
 
-    # Compare for changes as JSON's
     changes = json.dumps(new_data, sort_keys=True) != json.dumps(
         old_data, sort_keys=True
     )
 
-    # Print diff
     if changes:
         diff = unified_diff(
             json.dumps(old_data, indent=4).splitlines(),
