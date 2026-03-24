@@ -97,8 +97,8 @@ class DevMetricsUS:
             "acetabular_mid_frame": self.acetabular_mid_frame,
             "fem_mid_frame": self.fem_mid_frame,
             "critial_error": self.critial_error,
-            "cr_points": self.cr_points,
+            "cr_points": [float(p) for p in self.cr_points],
             "total_frames": self.total_frames,
-            "average_ilium_angle_baseline": self.average_ilium_angle_baseline,
+            "average_ilium_angle_baseline": float(self.average_ilium_angle_baseline),
             "custom": self.custom,
         }

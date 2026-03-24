@@ -173,16 +173,28 @@ class HipDataUS:
                 "metrics": [],
                 "keyphrase": config.name,
                 "dev_metrics": dev_metrics.json_dump(),
-                "recorded_error": str(self.recorded_error),
+                "recorded_error": (
+                    None
+                    if not self.recorded_error.errors
+                    and not self.recorded_error.frame_dependent_errors
+                    else str(self.recorded_error)
+                ),
             }
 
         # Serialize Metric2D objects as strings for deterministic comparisons
-        serialized_metrics = [{metric.name: metric.value} for metric in self.metrics]
+        serialized_metrics = [
+            {metric.name: float(metric.value)} for metric in self.metrics
+        ]
         return {
             "metrics": serialized_metrics,
             "keyphrase": config.name,
             "dev_metrics": dev_metrics.json_dump(),
-            "recorded_error": str(self.recorded_error),
+            "recorded_error": (
+                None
+                if not self.recorded_error.errors
+                and not self.recorded_error.frame_dependent_errors
+                else str(self.recorded_error)
+            ),
         }
 
 
@@ -271,10 +283,20 @@ class HipDatasUS:
         """
         return {
             "metrics": [
-                {metric.dump()[0]: metric.dump()[1:]} for metric in self.metrics
+                {
+                    metric.dump()[0]: [
+                        v if v == "N/A" else float(v) for v in metric.dump()[1:]
+                    ]
+                }
+                for metric in self.metrics
             ],
             "graf_frame": self.graf_frame,
             "dev_metrics": (self.dev_metrics.json_dump() if self.dev_metrics else None),
-            "recorded_error": str(self.recorded_error),
+            "recorded_error": (
+                None
+                if not self.recorded_error.errors
+                and not self.recorded_error.frame_dependent_errors
+                else str(self.recorded_error)
+            ),
             "keyphrase": config.name,
         }
