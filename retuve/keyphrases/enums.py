@@ -179,7 +179,7 @@ class Outputs:
     METRICS = "metrics.json"
     VIDEO_CLIP = "video.mp4"
     VISUAL3D = "visual_3d.html"
-    NIFTI = "segmentation.nii.gz"
+    NIFTI = "seg.nii.gz"
 
 
 class GrafSelectionMethod:
@@ -190,3 +190,4 @@ class GrafSelectionMethod:
     MANUAL_FEATURES = "manual_features"
     OBJ_CLASSIFY = "obj_classify"
     MANUAL_FRAME = "manual_frame"
+    HANDLED_IN_CUSTOM_METRICS = "handled_in_custom_metrics"

@@ -118,6 +118,31 @@ def _calculate_new_coordinates(original_size, target_size, original_coords):
     return new_x, new_y
 
 
+def resize_points_for_display(points, seg_frame_objs: SegFrameObjects):
+    final_points = []
+    final_image = np.array(
+        ImageOps.contain(
+            Image.fromarray(seg_frame_objs.img),
+            TARGET_SIZE,
+            method=Image.NEAREST,
+        )
+    )
+
+    for point in points:
+        if point is None:
+            final_points.append(None)
+            continue
+
+        x, y = _calculate_new_coordinates(
+            seg_frame_objs.img.shape[:2],
+            final_image.shape[:2],
+            point,
+        )
+        final_points.append([x, y])
+
+    return final_points
+
+
 def resize_data_for_display(
     hip: Union[HipDataUS, HipDataXray], seg_frame_objs: SegFrameObjects
 ):
@@ -155,13 +180,7 @@ def resize_data_for_display(
             if seg_obj.midline is None:
                 continue
 
-            for i, point in enumerate(seg_obj.midline):
-                x, y = _calculate_new_coordinates(
-                    seg_frame_objs.img.shape[:2],
-                    final_image.shape[:2],
-                    point,
-                )
-                seg_obj.midline[i] = (x, y)
+            seg_obj.midline_moved_org = copy.deepcopy(seg_obj.midline_moved)
 
             for i, point in enumerate(seg_obj.midline_moved):
                 x, y = _calculate_new_coordinates(

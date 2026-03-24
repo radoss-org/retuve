@@ -127,6 +127,8 @@ class HipDataUS:
 
         self.metrics = metrics
 
+        self.recorded_error: RecordedError = RecordedError()
+
     def __str__(self) -> str:
         return (
             f"HipDataUS(landmarks={self.landmarks}, metrics={self.metrics}, "
@@ -171,12 +173,28 @@ class HipDataUS:
                 "metrics": [],
                 "keyphrase": config.name,
                 "dev_metrics": dev_metrics.json_dump(),
+                "recorded_error": (
+                    None
+                    if not self.recorded_error.errors
+                    and not self.recorded_error.frame_dependent_errors
+                    else str(self.recorded_error)
+                ),
             }
 
+        # Serialize Metric2D objects as strings for deterministic comparisons
+        serialized_metrics = [
+            {metric.name: float(metric.value)} for metric in self.metrics
+        ]
         return {
-            "metrics": [{metric.name: metric.value} for metric in self.metrics],
+            "metrics": serialized_metrics,
             "keyphrase": config.name,
             "dev_metrics": dev_metrics.json_dump(),
+            "recorded_error": (
+                None
+                if not self.recorded_error.errors
+                and not self.recorded_error.frame_dependent_errors
+                else str(self.recorded_error)
+            ),
         }
 
 
@@ -208,10 +226,19 @@ class HipDatasUS:
         self.graf_frame: int = None
         self.grafs_hip: HipDataUS = None
         self.dev_metrics: DevMetricsUS = None
+        self.graf_confs = []
+        self.feature_score_map = {}
+
         self.video_clip: ImageSequenceClip = None
         self.visual_3d: Figure = None
         self.nifti: NIFTI = None
         self.cr_points: List[float] = []
+
+        self.bad_frame_reasons = None
+
+        # Temporary collector for custom dev metrics from full_metric_functions
+        self.dev_metrics_custom: Dict[str, object] = {}
+        self.custom_metrics = None
 
     def __iter__(self) -> HipDataUS:
         return iter(self.hip_datas)
@@ -256,10 +283,20 @@ class HipDatasUS:
         """
         return {
             "metrics": [
-                {metric.dump()[0]: metric.dump()[1:]} for metric in self.metrics
+                {
+                    metric.dump()[0]: [
+                        v if v == "N/A" else float(v) for v in metric.dump()[1:]
+                    ]
+                }
+                for metric in self.metrics
             ],
             "graf_frame": self.graf_frame,
             "dev_metrics": (self.dev_metrics.json_dump() if self.dev_metrics else None),
-            "recorded_error": str(self.recorded_error),
+            "recorded_error": (
+                None
+                if not self.recorded_error.errors
+                and not self.recorded_error.frame_dependent_errors
+                else str(self.recorded_error)
+            ),
             "keyphrase": config.name,
         }

@@ -65,7 +65,7 @@ for owner, repo, branch, directory, output_dir in to_download:
     Please type "yes" to confirm that you have read and agree to the terms of all the licenses.
     """)
 
-    if os.environ.get("RETUVE_DISABLE_WARNING") != "True":
+    if os.environ.get("RETUVE_DISABLE_WARNING").lower() != "true":
         user_input = input(
             "Do you agree to the terms of the licences in all the plugins? (Type 'yes' to continue): "
         )

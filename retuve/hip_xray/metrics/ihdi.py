@@ -17,7 +17,6 @@ Metric: IHDI Classification of DDH
 """
 
 from radstract.math import smart_find_intersection
-
 from retuve.draw import Overlay
 from retuve.hip_xray.classes import HipDataXray, LandmarksXRay
 from retuve.hip_xray.utils import extend_line

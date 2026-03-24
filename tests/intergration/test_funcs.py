@@ -99,6 +99,9 @@ def test_retuve_run_xray(landmarks_xray, xray_file_path, metrics_xray):
         file=xray_file_path,
     )
 
+    # Only added in retuve-run presently
+    del retuve_result.metrics["landmarks"]
+
     assert retuve_result.metrics == metrics_xray
 
 

@@ -22,7 +22,6 @@ from typing import List, Tuple
 import numpy as np
 from PIL import Image, ImageDraw
 from radstract.math import smart_find_intersection
-
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegObject
 from retuve.hip_us.classes.general import HipDataUS, LandmarksUS
@@ -36,13 +35,13 @@ APEX_RIGHT_FACTOR = 0
 
 def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Config):
     if illium is None or illium.midline_moved is None:
-        return landmarks
+        return landmarks, 0
 
     # Get endpoints of main midline
     left_most, right_most = find_midline_extremes(illium.midline_moved)
 
     if left_most is None or right_most is None:
-        return landmarks
+        return landmarks, 0
 
     # Convert to NumPy arrays once
     left_most = np.array(left_most, dtype=float)
@@ -96,7 +95,7 @@ def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Conf
             append_result((min_dist, (py, px), (closest_point[1], closest_point[0])))
 
     if not results:
-        return landmarks
+        return landmarks, 0
 
     # Convert to NumPy for fast argmax
     results_arr = np.array(results, dtype=object)
@@ -109,7 +108,13 @@ def find_alpha_landmarks(illium: SegObject, landmarks: LandmarksUS, config: Conf
     landmarks.left = (left_most[1], left_most[0])
     landmarks.right = (right_most[1], right_most[0])
 
-    return landmarks
+    angle = np.arctan2(
+        landmarks.apex[1] - landmarks.left[1],
+        landmarks.apex[0] - landmarks.left[0],
+    )
+    angle = np.degrees(angle)
+
+    return landmarks, angle
 
 
 @warning_decorator(alpha=True)
@@ -152,7 +157,11 @@ def draw_alpha(hip: HipDataUS, overlay: Overlay, config: Config) -> Overlay:
     :return: Overlay: The updated Overlay.
     """
     alpha = hip.get_metric(MetricUS.ALPHA)
-    if alpha != 0:
+    if (
+        alpha != 0
+        and (hip.landmarks.apex[0] - hip.landmarks.left[0]) != 0
+        and (hip.landmarks.right[0] - hip.landmarks.apex[0]) != 0
+    ):
         m1 = (hip.landmarks.apex[1] - hip.landmarks.left[1]) / (
             hip.landmarks.apex[0] - hip.landmarks.left[0]
         )

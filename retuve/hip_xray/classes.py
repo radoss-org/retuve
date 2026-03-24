@@ -164,14 +164,12 @@ class HipDataXray:
         """
         if not self.metrics:
             return 0.0
+
         for metric in self.metrics:
-            if (
-                metric
-                and isinstance(metric, Metric2D)
-                and getattr(metric, "name", None) == name
-            ):
+            if metric and isinstance(metric, Metric2D) and metric.name == name:
                 # Assume Metric2D.value is numeric; cast to float for consistency.
                 return float(metric.value)
+
         return 0.0
 
     def json_dump(self, config, dev_metrics: DevMetricsXRay) -> Dict[str, Any]:

@@ -37,7 +37,7 @@ def test_get_midlines(illium_0, config_us):
 
 
 def test_segs_2_landmarks_us(pre_edited_landmarks_us, pre_edited_results_us, config_us):
-    new_landmarks_list, _ = segs_2_landmarks_us(pre_edited_results_us, config_us)
+    new_landmarks_list, *_ = segs_2_landmarks_us(pre_edited_results_us, config_us)
 
     # remove landmarks that are None
     pre_edited_landmarks_us = [

@@ -23,7 +23,6 @@ import numpy as np
 import open3d as o3d
 from numpy import ndarray as NDArray
 from plotly.graph_objects import Figure
-
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.enums import Side
 from retuve.hip_us.classes.general import HipDatasUS, Metric3D
@@ -166,6 +165,7 @@ def get_3d_metrics_and_visuals(
     if all(metric.ant == 0 for metric in hip_datas.metrics):
         hip_datas.recorded_error.append("No Anterior values recorded.")
         hip_datas.recorded_error.critical = True
+
     if len(cr_points) != 0:
         fem_sph = FemSphere(cr_points[0], radius)
     else:

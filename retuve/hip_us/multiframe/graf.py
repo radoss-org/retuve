@@ -18,20 +18,19 @@ High Level Functions for Multiframe Analysis
 
 import json
 import os
-from typing import List
+from collections.abc import Callable
+from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
 from filelock import FileLock
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.enums import HipLabelsUS
-from retuve.hip_us.classes.general import HipDatasUS
+from retuve.hip_us.classes.general import HipDatasUS, HipDataUS
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import GrafSelectionMethod, MetricUS
 from retuve.logs import ulogger
 from retuve.utils import warning_decorator
-
-DO_CALIBRATION = False
 
 
 def _get_left_apex_angle(hip) -> bool:
@@ -42,7 +41,11 @@ def _get_left_apex_angle(hip) -> bool:
 
     :return: Boolean indicating if the left apex line is flat.
     """
-    if hip.landmarks is None:
+    if (
+        hip.landmarks is None
+        or hip.landmarks.left is None
+        or hip.landmarks.apex is None
+    ):
         return True
 
     C, A, B = (
@@ -56,6 +59,10 @@ def _get_left_apex_angle(hip) -> bool:
 
     angle = np.arccos((a**2 + b**2 - np.linalg.norm(A - B) ** 2) / (2 * a * b))
     angle = np.degrees(angle)
+
+    # if angle is nan, return 0
+    if np.isnan(angle):
+        return 0
 
     return int(angle)
 
@@ -84,8 +91,9 @@ def _get_femoral_head_area(seg_frame_objs) -> float:
 
 
 def _get_apex_right_distance(hip) -> float:
+    # there is also hip.landmarks.left
     apex_right_distance = 0
-    if hip.landmarks:
+    if hip.landmarks and hip.landmarks.apex and hip.landmarks.right:
         apex_right_distance = abs(hip.landmarks.apex[1] - hip.landmarks.right[1])
 
     return apex_right_distance
@@ -221,7 +229,8 @@ def graf_frame_algo(
         2,
     )
 
-    if file_id and DO_CALIBRATION:
+    # This is an experimental feature with no support
+    if file_id and getattr(config, "do_calibration", False):
         data = {
             "alpha_value": alpha_value,
             "line_flatness_value": line_flatness_value,
@@ -233,7 +242,7 @@ def graf_frame_algo(
         }
 
         # Create folder for the JSON file
-        json_folder = f"./scripts/val/cali/"
+        json_folder = config.api.savedir + "/calibration-data"
         os.makedirs(json_folder, exist_ok=True)
 
         # Define the path to the JSON file and the lock file
@@ -259,12 +268,14 @@ def graf_frame_algo(
             with open(json_file_path, "w") as f:
                 json.dump(hip_data_dict, f, indent=4)
 
-    return final_score
+    return final_score, []
 
 
 @warning_decorator(alpha=True)
 def find_graf_plane(
-    hip_datas: HipDatasUS, results: List[SegFrameObjects], config: Config
+    hip_datas: HipDatasUS,
+    results: List[SegFrameObjects],
+    config: Config,
 ) -> HipDatasUS:
     """
     Find the Graf Plane for the hip US module.
@@ -275,6 +286,18 @@ def find_graf_plane(
 
     :return: The hip data with the Graf Plane.
     """
+
+    if (
+        config.hip.graf_selection_method
+        == GrafSelectionMethod.HANDLED_IN_CUSTOM_METRICS
+    ):
+        return hip_datas
+
+    hip_datas.graf_confs = []
+    hip_datas.graf_frame = hip_datas[0].frame_no
+    hip_datas.grafs_hip = HipDataUS(
+        frame_no=hip_datas[0].frame_no,
+    )
 
     if config.hip.graf_selection_method == GrafSelectionMethod.MANUAL_FRAME:
         if config.hip.graf_frame_selection is None:
@@ -315,102 +338,91 @@ def find_graf_plane(
 
 
 def find_graf_plane_manual_features(
-    hip_datas: HipDatasUS, results: List[SegFrameObjects], config: Config
+    hip_datas: HipDatasUS,
+    results: List[SegFrameObjects],
+    config: Config,
+    just_graf_confs=False,
+    feature_algo: Callable = None,
 ) -> HipDatasUS:
-    """
-    Find the Graf Plane for the hip US module.
+    if feature_algo is None:
+        feature_algo = graf_frame_algo
 
-    :param hip_datas: The hip data.
-    :param results: The results of the segmentation.
+    graf_threshold = config.hip.graf_algo_threshold or 1
 
-    :return: The hip data with the Graf Plane.
-    """
-
-    if config.hip.graf_algo_threshold:
-        GRAF_THRESHOLD = config.hip.graf_algo_threshold
-    else:
-        # NOTE(adamcarthur) - this is so that previous behavior is maintained
-        GRAF_THRESHOLD = 1
-
-    any_good_graf_data = [
+    # 1. Identify truly valid frames (non-zero metrics and metrics exist)
+    valid_frames_data = [
         (hip_data, seg_frame_objs)
         for hip_data, seg_frame_objs in zip(hip_datas, results)
-        if hip_data.metrics and all(metric.value != 0 for metric in hip_data.metrics)
+        if hip_data.metrics
+        and len(hip_data.metrics) > 0
+        and all(metric.value != 0 for metric in hip_data.metrics)
     ]
 
-    if len(any_good_graf_data) == 0:
-        ulogger.warning("No good graf frames found")
+    if not valid_frames_data:
+        print("No good graf frames found")
         hip_datas.recorded_error.append("No Perfect Grafs Frames found.")
         hip_datas.recorded_error.critical = True
-        any_good_graf_frames = hip_datas.hip_datas
-        any_good_graf_data = zip(any_good_graf_frames, results)
-    else:
-        any_good_graf_frames, _ = zip(*any_good_graf_data)
+        if just_graf_confs:
+            return None, None
+        return hip_datas
 
-    # get max alpha frame
-    max_alpha = max(
-        any_good_graf_frames,
-        key=lambda hip_data: hip_data.get_metric(MetricUS.ALPHA),
-    ).get_metric(MetricUS.ALPHA)
+    # 2. Calculate confidence for ALL frames, but store in a map
+    # to avoid index-vs-frame_no confusion
+    conf_map = {}
+    feature_score_map = {}
 
-    all_illiums = [
-        hip_data for hip_data in hip_datas if hip_data.get_metric(MetricUS.ALPHA) != 0
-    ]
+    # We still need max_alpha from the whole set or the valid set?
+    # Usually max_alpha is used to normalize.
+    # Here we use the valid subset to find max_alpha.
+    max_alpha = max([h.get_metric(MetricUS.ALPHA) for h, _ in valid_frames_data])
 
-    if len(all_illiums) > 0:
-        hip_datas.graf_confs = [
-            graf_frame_algo(
-                (hip_data, seg_frame_objs),
-                max_alpha,
-                all_illiums[0].frame_no,
-                all_illiums[-1].frame_no,
-                None,
-                config,
-            )
-            / GRAF_THRESHOLD
-            for hip_data, seg_frame_objs in zip(hip_datas, results)
-        ]
+    all_illiums = [h for h in hip_datas if h.get_metric(MetricUS.ALPHA) != 0]
 
-    if len(all_illiums) != 0:
-        first_illium_frame = all_illiums[0].frame_no
-        last_illium_frame = all_illiums[-1].frame_no
-
-    if max_alpha == 0:
+    if not all_illiums or max_alpha == 0:
         hip_datas.recorded_error.append("Max Alpha is 0.")
         hip_datas.recorded_error.critical = True
-        return hip_datas
+        return (None, None) if just_graf_confs else hip_datas
 
-    if not hasattr(hip_datas, "file_id"):
-        hip_datas.file_id = None
-
-    graf_hip, _ = max(
-        any_good_graf_data,
-        key=lambda hip_zipped_data: graf_frame_algo(
-            hip_zipped_data,
+    # Calculate scores
+    for hip_data, seg_frame_objs in zip(hip_datas, results):
+        score, feature_scores = feature_algo(
+            (hip_data, seg_frame_objs),
             max_alpha,
-            first_illium_frame,
-            last_illium_frame,
-            hip_datas.file_id,
+            all_illiums[0].frame_no,
+            all_illiums[-1].frame_no,
+            None,
             config,
-        ),
-    )
+        )
+        conf_map[hip_data.frame_no] = score
+        feature_score_map[hip_data.frame_no] = feature_scores
 
-    # pick the index closest to the center
-    center = len(hip_datas.hip_datas) // 2
-    graf_frame = min(
-        [graf_hip.frame_no],
-        key=lambda index: abs(index - center),
-    )
+    # 3. Select the best frame ONLY from the valid subset
+    best_frame_no = max(valid_frames_data, key=lambda x: conf_map[x[0].frame_no])[
+        0
+    ].frame_no
 
-    best_conf = hip_datas.graf_confs[graf_frame]
-    if best_conf < 1:
+    best_conf = conf_map[best_frame_no]
+    hip_datas[best_frame_no].metrics
+
+    if best_conf / graf_threshold < 1:
         ulogger.warning("No high-quality Graf Frames found")
-        hip_datas.recorded_error.append("No High-Quality Graf Frames found.")
+        hip_datas.recorded_error.append(
+            f"No High-Quality Graf Frames found: best is [{best_conf}] with an Metrics of [{hip_datas[best_frame_no].metrics}]"
+        )
         hip_datas.recorded_error.critical = True
-        return hip_datas
+        # For display only
+        hip_datas.graf_confs = [conf_map[h.frame_no] for h in hip_datas]
+        hip_datas.feature_score_map = feature_score_map
+        return (None, None) if just_graf_confs else hip_datas
 
-    hip_datas.graf_frame = graf_frame
+    if just_graf_confs:
+        # Return all confs in a list matching input hip_datas order
+        all_confs = [conf_map[h.frame_no] for h in hip_datas]
+        return all_confs, best_frame_no
 
-    hip_datas.grafs_hip = [hip for hip in hip_datas if hip.frame_no == graf_frame][0]
+    hip_datas.graf_confs = [conf_map[h.frame_no] for h in hip_datas]
+    hip_datas.graf_frame = best_frame_no
+    hip_datas.grafs_hip = next(h for h in hip_datas if h.frame_no == best_frame_no)
+    hip_datas.feature_score_map = feature_score_map
 
     return hip_datas

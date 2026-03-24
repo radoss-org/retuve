@@ -127,7 +127,7 @@ def run_single(
 
     except Exception as e:
         if config.batch.debug == True:
-            raise
+            raise e
         e = traceback.format_exc()
         print(f"Error processing file {file_name}: {e}")
         return e

@@ -18,6 +18,7 @@ A function for getting all the other metrics that are just for development purpo
 
 from typing import List
 
+import numpy as np
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.dev import DevMetricsUS
 from retuve.hip_us.classes.enums import HipLabelsUS
@@ -92,6 +93,23 @@ def get_dev_metrics(
         ]
 
     dev_metrics.total_frames = len(hip_datas)
+
+    dev_metrics.average_ilium_angle_baseline = round(
+        np.mean(hip_datas.ilium_angle_baselines), 2
+    )
+
+    if not isinstance(dev_metrics.custom, dict):
+        dev_metrics.custom = {}
+
+    # Merge any custom dev metrics collected earlier (e.g., from full_metric_functions)
+    try:
+        if hip_datas.dev_metrics_custom:
+            dev_metrics.custom.update(hip_datas.dev_metrics_custom)
+            dev_metrics.custom["graf_frame_score"] = hip_datas.graf_confs[
+                hip_datas.graf_frame
+            ]
+    except Exception:
+        pass
 
     hip_datas.dev_metrics = dev_metrics
 

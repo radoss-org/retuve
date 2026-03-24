@@ -44,9 +44,14 @@ def get_centering_ratio(
 
     :return: The centering ratio and the 3 points used to calculate it.
     """
+
+    if hip_datas.graf_frame is None:
+        return 0, (None, None, None)
+
     verticies = np.array(illium_mesh.vertices)
 
     # Get min and maz verticies in the z axis
+    # Assume min will be anterior and max will be posterior
     min_z = np.min(verticies[:, 2])
     max_z = np.max(verticies[:, 2])
 
@@ -61,16 +66,13 @@ def get_centering_ratio(
         fem_center[1],
         min_z,
     ]
-
     max_z_vert = [
         fem_center[0],
         fem_center[1],
         max_z,
     ]
 
-    # # Get the ratio
-    ratio = abs(fem_center[2] - max_z) / abs(max_z - min_z)
-
-    ratio = round(ratio, 2)
+    # https://files.mcaq.me/a6jj5.png
+    ratio = (fem_center[2] - hip_datas.graf_frame) / (max_z - min_z)
 
     return round(ratio, 2), (fem_center, max_z_vert, min_z_vert)

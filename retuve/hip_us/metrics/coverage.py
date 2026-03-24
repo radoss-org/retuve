@@ -17,9 +17,7 @@ Metric: Coverage
 """
 
 import numpy as np
-from networkx import diameter
 from radstract.math import smart_find_intersection
-
 from retuve.classes.draw import Overlay
 from retuve.classes.seg import SegObject
 from retuve.hip_us.classes.general import HipDataUS, LandmarksUS
@@ -66,9 +64,10 @@ def find_cov_landmarks(
     if diameter_1 == 0 or diameter_2 == 0:
         return landmarks
 
-    # Reject frames with a non-circular femoral head
-    if abs((diameter_1 - diameter_2) / diameter_1) > 0.35:
-        return landmarks
+    if config.hip.allow_neutral_femoral_heads == False:
+        # Reject frames with a non-circular femoral head
+        if abs((diameter_1 - diameter_2) / diameter_1) > 0.35:
+            return landmarks
 
     diameter = diameter_2
 
@@ -103,6 +102,9 @@ def find_cov_landmarks(
         # sin and cos of the angle between the m_orth and the x-axis
         radius_x = radius * np.cos(np.radians(angle))
         radius_y = radius * np.sin(np.radians(angle))
+
+        if np.isnan(center[0] + radius_x):
+            return landmarks
 
         point_above = (
             int(center[0] + radius_x),
@@ -147,6 +149,7 @@ def find_coverage(landmarks: LandmarksUS) -> float:
         and landmarks.mid_cov_point
         and landmarks.point_D
         and landmarks.point_d
+        and landmarks.point_D[1] > landmarks.point_d[1]
     ):
         return 0
 
@@ -194,19 +197,22 @@ def draw_coverage(hip: HipDataUS, overlay: Overlay, config: Config) -> Overlay:
     return overlay
 
 
-def bad_coverage(hip: HipDataUS) -> bool:
+def bad_coverage(hip: HipDataUS, config: Config) -> bool:
     """
     Check if the Coverage is bad.
 
     :param hip: HipDataUS: The Hip Data.
+    :param config: Config: The Config.
 
     :return: bool: True if the Coverage is bad.
     """
 
-    if (
-        hip.get_metric(MetricUS.COVERAGE) <= 0
-        or hip.get_metric(MetricUS.COVERAGE) > 0.9
-    ):
+    cov = hip.get_metric(MetricUS.COVERAGE)
+
+    # Lower bound configurable: treat zero as error when enabled
+    lower_bad = cov < 0 if not config.hip.count_0_coverage_as_error else cov <= 0
+
+    if lower_bad or cov > 0.9:
         return True
 
     return False

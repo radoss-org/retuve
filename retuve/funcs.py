@@ -18,13 +18,16 @@ Contains the high-level functions that are used to run the Retuve pipeline.
 
 import copy
 import time
+import tracemalloc
 from typing import Any, BinaryIO, Callable, Dict, List, Tuple, Union
 
 import pydicom
+from moviepy import VideoFileClip
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 from PIL import Image
 from plotly.graph_objs import Figure
 from radstract.data.dicom import (
+    DicomTypes,
     convert_dicom_to_images,
     convert_images_to_dicom,
 )
@@ -37,7 +40,7 @@ from retuve.hip_us.classes.dev import DevMetricsUS
 from retuve.hip_us.classes.general import HipDatasUS, HipDataUS
 from retuve.hip_us.draw import draw_hips_us, draw_table
 from retuve.hip_us.handlers.bad_data import handle_bad_frames
-from retuve.hip_us.handlers.side import reverse_3dus_orientaition
+from retuve.hip_us.handlers.side import set_side_info
 from retuve.hip_us.metrics.dev import get_dev_metrics
 from retuve.hip_us.modes.landmarks import landmarks_2_metrics_us
 from retuve.hip_us.modes.seg import pre_process_segs_us, segs_2_landmarks_us
@@ -52,6 +55,11 @@ from retuve.keyphrases.config import Config, OperationType
 from retuve.keyphrases.enums import HipMode
 from retuve.logs import ulogger
 from retuve.typehints import GeneralModeFuncType
+from retuve.custom import (
+    custom_seg_preprocessing,
+    get_all_custom_metrics,
+    get_per_frame_xray,
+)
 
 
 def get_fps(no_of_frames: int, min_fps=30, min_vid_length=6) -> int:
@@ -91,6 +99,9 @@ def process_landmarks_xray(
     :return: The hip datas and the image arrays.
     """
     hip_datas_xray = landmarks_2_metrics_xray(landmark_results, config)
+
+    hip_datas_xray = get_per_frame_xray(hip_datas_xray, seg_results, config)
+
     image_arrays = draw_hips_xray(hip_datas_xray, seg_results, config)
     return hip_datas_xray, image_arrays
 
@@ -103,6 +114,7 @@ def process_segs_us(
         List[SegFrameObjects],
     ],
     modes_func_kwargs_dict: Dict[str, Any],
+    called_by_2dus: bool = False,
 ) -> Tuple[HipDatasUS, List[SegFrameObjects], Tuple[int, int, int]]:
     """
     Process the segmentation for the 3DUS.
@@ -111,17 +123,33 @@ def process_segs_us(
     :param file: The file.
     :param modes_func: The mode function.
     :param modes_func_kwargs_dict: The mode function kwargs.
+    :param called_by_2dus: Whether the calling was from the 2DUS function.
 
     :return: The hip datas, the results, and the shape.
     """
 
     results: List[SegFrameObjects] = modes_func(file, config, **modes_func_kwargs_dict)
     results, shape = pre_process_segs_us(results, config)
-    pre_edited_results = copy.deepcopy(results)
-    landmarks, all_seg_rejection_reasons = segs_2_landmarks_us(results, config)
-    pre_edited_landmarks = copy.deepcopy(landmarks)
+
+    results = custom_seg_preprocessing(results, shape, config)
+
+    if config.test_data_passthrough:
+        pre_edited_results = copy.deepcopy(results)
+
+    landmarks, all_seg_rejection_reasons, ilium_angle_baselines = segs_2_landmarks_us(
+        results, config
+    )
+
+    if config.test_data_passthrough:
+        pre_edited_landmarks = copy.deepcopy(landmarks)
+
     hip_datas = landmarks_2_metrics_us(landmarks, shape, config)
     hip_datas.all_seg_rejection_reasons = all_seg_rejection_reasons
+    hip_datas.ilium_angle_baselines = ilium_angle_baselines
+
+    hip_datas = get_all_custom_metrics(
+        hip_datas, results, config, called_by_2dus=called_by_2dus
+    )
 
     if config.test_data_passthrough:
         hip_datas.pre_edited_results = pre_edited_results
@@ -220,6 +248,8 @@ def analyze_synthetic_xray(
                 config, landmark_results, seg_results
             )
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         ulogger.error(f"Critical Error: {e}")
         return None
 
@@ -283,6 +313,8 @@ def analyse_hip_3DUS(
                 "This is not yet supported. Please use the seg operation type."
             )
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None, None
 
@@ -294,9 +326,7 @@ def analyse_hip_3DUS(
     hip_datas.file_id = file_id
     hip_datas = find_graf_plane(hip_datas, results, config=config)
 
-    hip_datas, results = reverse_3dus_orientaition(
-        hip_datas, results, config.hip.allow_flipping
-    )
+    hip_datas, results = set_side_info(hip_datas, results, config)
 
     (
         hip_datas,
@@ -316,8 +346,8 @@ def analyse_hip_3DUS(
 
     hip_datas = get_dev_metrics(hip_datas, results, config)
 
-    data_image = draw_table(shape, hip_datas)
-    image_arrays.append(data_image)
+    # data_image = draw_table(shape, hip_datas)
+    # image_arrays.append(data_image)
 
     ulogger.info(f"Total 3DUS time: {time.time() - start:.2f}s")
 
@@ -340,6 +370,9 @@ def analyse_hip_3DUS(
         hip_datas.femoral_sphere = femoral_sphere
         hip_datas.avg_normals_data = avg_normals_data
         hip_datas.normals_data = normals_data
+
+    if hip_datas.custom_metrics is not None:
+        hip_datas.metrics += hip_datas.custom_metrics
 
     return (
         hip_datas,
@@ -379,9 +412,15 @@ def analyse_hip_2DUS(
     try:
         if config.operation_type in OperationType.SEG:
             hip_datas, results, _ = process_segs_us(
-                config, data, modes_func, modes_func_kwargs_dict
+                config,
+                data,
+                modes_func,
+                modes_func_kwargs_dict,
+                called_by_2dus=True,
             )
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None
 
@@ -397,6 +436,9 @@ def analyse_hip_2DUS(
     if return_seg_info:
         hip.seg_info = results
 
+    if hip_datas.custom_metrics is not None:
+        hip.metrics += hip_datas.custom_metrics
+
     return hip, image, hip_datas.dev_metrics
 
 
@@ -408,40 +450,30 @@ def analyse_hip_2DUS_sweep(
         List[SegFrameObjects],
     ],
     modes_func_kwargs_dict: Dict[str, Any],
-) -> Tuple[
-    HipDataUS,
-    Image.Image,
-    DevMetricsUS,
-    ImageSequenceClip,
-]:
-    """
-    Analyze a 2D Sweep Ultrasound Hip
-
-    :param dcm: The DICOM file.
-    :param keyphrase: The keyphrase.
-    :param modes_func: The mode function.
-    :param modes_func_kwargs_dict: The mode function kwargs.
-
-    :return: The hip, the image, the dev metrics, and the video clip.
-    """
+) -> Tuple[HipDataUS, Image.Image, DevMetricsUS, ImageSequenceClip]:
 
     config = Config.get_config(keyphrase)
+    config.batch.hip_mode = HipMode.US2DSW
     hip_datas = HipDatasUS()
 
-    # if a set of images, convert to a DICOM file
+    # Convert list of images to DICOM
     if isinstance(image, list) and all(isinstance(img, Image.Image) for img in image):
         image = convert_images_to_dicom(image)
 
     try:
         if config.operation_type == OperationType.SEG:
             hip_datas, results, shape = process_segs_us(
-                config, image, modes_func, modes_func_kwargs_dict
+                config,
+                image,
+                modes_func,
+                modes_func_kwargs_dict,
+                called_by_2dus=True,
             )
-        elif config.operation_type == OperationType.LANDMARK:
-            raise NotImplementedError(
-                "This is not yet supported. Please use the seg operation type."
-            )
+        else:
+            raise NotImplementedError("Only SEG operation type supported.")
     except Exception as e:
+        if config.batch.debug == True:
+            raise e
         ulogger.error(f"Critical Error: {e}")
         return None, None, None, None
 
@@ -450,22 +482,41 @@ def analyse_hip_2DUS_sweep(
 
     graf_hip = hip_datas.grafs_hip
     graf_frame = hip_datas.graf_frame
+    graf_hip.graf_frame = graf_frame
+    graf_hip.recorded_error = hip_datas.recorded_error
 
     image_arrays, _ = draw_hips_us(hip_datas, results, None, config)
 
     hip_datas = get_dev_metrics(hip_datas, results, config)
 
     if graf_frame is not None:
-        graf_image = image_arrays[graf_frame]
-        graf_image = Image.fromarray(graf_image)
-
-        image_arrays = (
-            [image_arrays[graf_frame]] * int(len(image_arrays) * 0.1)
-            + image_arrays
-            + [image_arrays[graf_frame]] * int(len(image_arrays) * 0.1)
-        )
+        graf_image = Image.fromarray(image_arrays[graf_frame])
     else:
-        graf_image = None
+        graf_image = Image.fromarray(image_arrays[len(image_arrays) // 2])
+        marked_pairs = [
+            (hip, Image.fromarray(image), conf)
+            for hip, image, conf in zip(hip_datas, image_arrays, hip_datas.graf_confs)
+            if hip.marked
+        ]
+
+        try:
+            if marked_pairs:
+                graf_image = marked_pairs[len(marked_pairs) // 2][1]
+
+                graf_image = min(
+                    marked_pairs,
+                    key=lambda pair: (
+                        abs(pair[0].landmarks.left[1] - pair[0].landmarks.apex[1]),
+                        -abs(pair[0].landmarks.apex[0] - pair[0].landmarks.left[0]),
+                    ),
+                )[1]
+
+                graf_image = max(
+                    marked_pairs,
+                    key=lambda pair: (pair[2]),
+                )[1]
+        except AttributeError:
+            pass
 
     video_clip = ImageSequenceClip(
         image_arrays,
@@ -475,6 +526,9 @@ def analyse_hip_2DUS_sweep(
             config.visuals.min_vid_length,
         ),
     )
+
+    if hip_datas.custom_metrics is not None and graf_hip.metrics:
+        graf_hip.metrics += hip_datas.custom_metrics
 
     return graf_hip, graf_image, hip_datas.dev_metrics, video_clip
 
@@ -515,60 +569,124 @@ def retuve_run(
     modes_func_kwargs_dict: Dict[str, Any],
     file: str,
 ) -> RetuveResult:
-    """
-    Run the Retuve pipeline with standardised inputs and outputs.
-
-    :param hip_mode: The hip mode.
-    :param config: The configuration.
-    :param modes_func: The mode function.
-    :param modes_func_kwargs_dict: The mode function kwargs.
-    :param file: The file.
-
-    :return: The Retuve result standardised output.
-    """
+    org_file_name = file
+    # 0 or 1 because we assume nothing means no extention dicoms
     always_dcm = (
         len(config.batch.input_types) == 1 and ".dcm" in config.batch.input_types
+    ) or config.batch.input_types == [""]
+
+    is_dicom = always_dcm or (
+        file.endswith(".dcm") and ".dcm" in config.batch.input_types
     )
 
-    if always_dcm or (file.endswith(".dcm") and ".dcm" in config.batch.input_types):
-        file = pydicom.dcmread(file)
+    # Helper to load an image (DICOM or regular)
+    def load_image(path: str):
+        if is_dicom:
+            with pydicom.dcmread(path) as ds:
+                image = convert_dicom_to_images(ds, dicom_type=DicomTypes.SINGLE)[
+                    0
+                ].convert("RGB")
+            return image
+        else:
+            return Image.open(path).convert("RGB")
 
     if hip_mode == HipMode.XRAY:
-        if not isinstance(file, pydicom.FileDataset):
-            file = Image.open(file)
-        hip, image, dev_metrics = analyse_hip_xray_2D(
-            file, config, modes_func, modes_func_kwargs_dict
-        )
-        return RetuveResult(hip.json_dump(config, dev_metrics), image=image, hip=hip)
-    elif hip_mode == HipMode.US3D:
-        hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
-            file, config, modes_func, modes_func_kwargs_dict
-        )
-        return RetuveResult(
-            hip_datas.json_dump(config),
-            hip_datas=hip_datas,
-            video_clip=video_clip,
-            visual_3d=visual_3d,
-        )
+        if is_dicom:
+            with pydicom.dcmread(file) as ds:
+                file_obj = ds
+                hip, image, dev_metrics = analyse_hip_xray_2D(
+                    file_obj, config, modes_func, modes_func_kwargs_dict
+                )
+        else:
+            img = Image.open(file).convert("RGB")
+            hip, image, dev_metrics = analyse_hip_xray_2D(
+                img, config, modes_func, modes_func_kwargs_dict
+            )
+
+            dump = hip.json_dump(config, dev_metrics)
+            dump["landmarks"] = dict(hip.landmarks.items())
+
+        return RetuveResult(dump, image=image, hip=hip)
+
     elif hip_mode == HipMode.US2D:
-        file = Image.open(file).convert("RGB")
+        img = load_image(file)
         hip, image, dev_metrics = analyse_hip_2DUS(
-            file, config, modes_func, modes_func_kwargs_dict
+            img, config, modes_func, modes_func_kwargs_dict
         )
         return RetuveResult(hip.json_dump(config, dev_metrics), hip=hip, image=image)
-    elif hip_mode == HipMode.US2DSW:
-        hip, image, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
-            file, config, modes_func, modes_func_kwargs_dict
-        )
-        json_dump = None
-        if hip:
-            json_dump = hip.json_dump(config, dev_metrics)
 
+    elif hip_mode == HipMode.US2DSW:
+        if is_dicom:
+            with pydicom.dcmread(file) as ds:
+                file_obj = ds
+                hip, image, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
+                    file_obj, config, modes_func, modes_func_kwargs_dict
+                )
+        else:
+            if ".mp4" in file:
+                file = video_to_pillow_images(file)
+
+            hip, image, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
+                file, config, modes_func, modes_func_kwargs_dict
+            )
+
+        json_dump = hip.json_dump(config, dev_metrics) if hip else None
         return RetuveResult(
             json_dump,
             hip=hip,
             image=image,
             video_clip=video_clip,
         )
+
+    elif hip_mode == HipMode.US3D:
+        modes_func_kwargs_dict["file_id"] = org_file_name.split("/")[-1]
+
+        if is_dicom:
+            with pydicom.dcmread(file) as ds:
+                hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
+                    ds, config, modes_func, modes_func_kwargs_dict
+                )
+        else:
+            hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
+                file, config, modes_func, modes_func_kwargs_dict
+            )
+
+        if hip_datas:
+            return RetuveResult(
+                hip_datas.json_dump(config),
+                hip_datas=hip_datas,
+                video_clip=video_clip,
+                visual_3d=visual_3d,
+            )
+        else:
+            return RetuveResult({})
+
     else:
-        raise ValueError(f"Invalid hip_mode. {hip_mode}")
+        raise ValueError(f"Invalid hip_mode: {hip_mode}")
+
+
+def video_to_pillow_images(video_path):
+    """
+    Opens a video file and converts each frame into a Pillow Image object.
+
+    Args:
+        video_path (str): The path to the video file.
+
+    Returns:
+        list: A list of Pillow Image objects, one for each frame of the video.
+    """
+    try:
+        clip = VideoFileClip(video_path)
+
+        image_list = []
+        for frame_np_array in clip.iter_frames():
+            # Convert the NumPy array (frame) to a Pillow Image
+            image = Image.fromarray(frame_np_array)
+            image_list.append(image)
+
+        clip.close()  # Close the clip to release resources
+        return image_list
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return []

@@ -30,6 +30,7 @@ from retuve.hip_xray.metrics.tonnis import draw_tonnis
 from retuve.hip_xray.metrics.wiberg import draw_wiberg
 from retuve.keyphrases.config import Config
 from retuve.logs import log_timings
+from retuve.custom import draw_custom
 
 
 def draw_hips_xray(
@@ -64,6 +65,8 @@ def draw_hips_xray(
         overlay = draw_wiberg(final_hip, overlay, config)
         overlay = draw_ihdi(final_hip, overlay, config)
         overlay = draw_tonnis(final_hip, overlay, config)
+
+        overlay = draw_custom(final_hip, final_seg_frame_objs, overlay, config)
 
         img = overlay.apply_to_image(final_image)
 
