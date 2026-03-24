@@ -122,6 +122,7 @@ batch = BatchConfig(
     processes=1,
     input_types=[".dcm", ".jpg"],
     datasets=[api.upload_dir],
+    debug=False,
 )
 
 base_config = Config(

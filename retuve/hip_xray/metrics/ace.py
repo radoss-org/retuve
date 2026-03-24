@@ -97,7 +97,7 @@ def draw_ace(hip: HipDataXray, overlay: Overlay, config: Config):
         landmarks.pel_r_o, landmarks.pel_r_i, scale=1.7, direction="up"
     )
 
-    overlay.draw_lines([new_H_line], color_override=Colors.PURPLE)
+    overlay.draw_lines([new_H_line], color_override=Colors.WHITE)
     overlay.draw_lines([new_A_line, new_B_line])
 
     overlay.draw_text(

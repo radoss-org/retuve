@@ -48,8 +48,7 @@ for owner, repo, branch, directory, output_dir in to_download:
     # =======================
     # Before running this code, please read the following disclaimer carefully:
 
-    print(
-        f"""
+    print(f"""
     DISCLAIMER
     =======================
     Before running the plugin download script, please read the following disclaimer carefully:
@@ -64,8 +63,7 @@ for owner, repo, branch, directory, output_dir in to_download:
     If you do not agree to these terms, do not proceed with running these tests.
 
     Please type "yes" to confirm that you have read and agree to the terms of all the licenses.
-    """
-    )
+    """)
 
     if os.environ.get("RETUVE_DISABLE_WARNING") != "True":
         user_input = input(
