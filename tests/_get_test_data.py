@@ -44,8 +44,7 @@ from retuve.testdata import Cases, download_case
 # =======================
 # Before running this code, please read the following disclaimer carefully:
 
-print(
-    """
+print("""
 DISCLAIMER
 =======================
 Before running the test generation script, please read the following disclaimer carefully:
@@ -61,8 +60,7 @@ By running tests with this data, you agree to abide by the terms of the CC BY-NC
 If you do not agree to these terms, do not proceed with running these tests.
 
 Please type "yes" to confirm that you have read and agree to the terms of the CC BY-NC-SA 3.0 license.
-"""
-)
+""")
 
 if os.environ.get("RETUVE_DISABLE_WARNING") != "True":
     user_input = input(
@@ -250,19 +248,29 @@ def load_previous_release_note():
     return None, None
 
 
+def normalize_numbers(obj):
+    if isinstance(obj, dict):
+        return {k: normalize_numbers(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [normalize_numbers(v) for v in obj]
+    if isinstance(obj, float) and obj.is_integer():
+        return int(obj)
+    return obj
+
+
 def has_changes(new_data, old_data):
-    # Change recorded error to None in both if "" or None
+    new_data = normalize_numbers(new_data)
+    old_data = normalize_numbers(old_data)
+
     if new_data["3dus"]["recorded_error"] in ["", None]:
         new_data["3dus"]["recorded_error"] = None
     if old_data["3dus"]["recorded_error"] in ["", None]:
         old_data["3dus"]["recorded_error"] = None
 
-    # Compare for changes as JSON's
     changes = json.dumps(new_data, sort_keys=True) != json.dumps(
         old_data, sort_keys=True
     )
 
-    # Print diff
     if changes:
         diff = unified_diff(
             json.dumps(old_data, indent=4).splitlines(),
