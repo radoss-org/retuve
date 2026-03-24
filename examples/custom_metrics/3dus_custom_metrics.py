@@ -50,9 +50,7 @@ def scan_quality_graf(hip_datas, results, config):
         from retuve.hip_us.multiframe import find_graf_plane
 
         hip_datas = find_graf_plane(hip_datas, results, config)
-        if getattr(hip_datas, "graf_frame", None) is None or not getattr(
-            hip_datas, "graf_confs", []
-        ):
+        if hip_datas.graf_frame is None or not hip_datas.graf_confs:
             return 0.0
         return float(round(hip_datas.graf_confs[hip_datas.graf_frame], 2))
     except Exception:
@@ -64,10 +62,11 @@ def draw_seg_count_on_graf(hip, overlay, config):
     try:
         from retuve.hip_us.classes.enums import Side
 
-        if getattr(hip, "side", None) != Side.GRAF:
+        if hip.side != Side.GRAF:
             return overlay
         count = hip.get_metric("seg object count") or 0
-        overlay.draw_text(f"count: {int(count)}", 20, 20, header="h2", grafs=True)
+        overlay.draw_text(f"count: {int(count)}",
+                          20, 20, header="h2", grafs=True)
     except Exception:
         pass
     return overlay
@@ -82,7 +81,8 @@ custom_3dus.hip.full_metric_functions = [
 custom_3dus.hip.per_frame_metric_functions = [
     ("seg object count", seg_object_count_metric)
 ]
-custom_3dus.hip.post_draw_functions = [("us seg count on graf", draw_seg_count_on_graf)]
+custom_3dus.hip.post_draw_functions = [
+    ("us seg count on graf", draw_seg_count_on_graf)]
 
 
 # --- Run the pipeline -------------------------------------------------------

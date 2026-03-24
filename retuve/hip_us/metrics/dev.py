@@ -72,7 +72,8 @@ def get_dev_metrics(
         ].frame_no
 
     if len(fem_marked_hips) > 0:
-        dev_metrics.fem_mid_frame = fem_marked_hips[len(fem_marked_hips) // 2].frame_no
+        dev_metrics.fem_mid_frame = fem_marked_hips[len(
+            fem_marked_hips) // 2].frame_no
 
     dev_metrics.critial_error = hip_datas.recorded_error.critical
 
@@ -103,7 +104,7 @@ def get_dev_metrics(
 
     # Merge any custom dev metrics collected earlier (e.g., from full_metric_functions)
     try:
-        if hasattr(hip_datas, "dev_metrics_custom") and hip_datas.dev_metrics_custom:
+        if hip_datas.dev_metrics_custom:
             dev_metrics.custom.update(hip_datas.dev_metrics_custom)
             dev_metrics.custom["graf_frame_score"] = hip_datas.graf_confs[
                 hip_datas.graf_frame

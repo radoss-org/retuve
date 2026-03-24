@@ -112,10 +112,8 @@ def test_generated_custom_draw_3dus_matches_fixture(us_file_path, img_3dus_custo
         modes_func_kwargs_dict={"seg": seg_file},
     )
 
-    # Fixture-provided expected image (numpy array)
-
     # Extract the graf frame
-    graf_idx = getattr(hip_datas, "graf_frame", None)
+    graf_idx = hip_datas.graf_frame
     assert graf_idx is not None, "Graf frame not identified in 3DUS pipeline."
 
     extracted = None

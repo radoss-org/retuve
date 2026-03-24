@@ -97,6 +97,7 @@ hip = HipConfig(
     post_draw_functions=[],
     use_polyfit_replace_apex=False,
     count_0_coverage_as_error=False,
+    allow_neutral_femoral_heads=False,
 )
 
 trak = TrakConfig(

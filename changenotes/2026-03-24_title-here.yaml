@@ -1,4 +1,5 @@
-description: Your description here.
+description: |
+  - Removed "apex to close" bad frame reason
 current_output:
   3dus:
     metrics:
@@ -11,14 +12,14 @@ current_output:
       - N/A
       - N/A
       - N/A
-      - 0.44  # Modified
+      - 0.44
     - Alpha:
-      - 62.67  # Modified
+      - 62.67
       - 69.2
       - 54.33
-      - 62.07  # Modified
+      - 62.07
     - Coverage:
-      - 0.58  # Modified
+      - 0.58
       - 0.681
       - 0.54
       - 0.6
@@ -36,43 +37,44 @@ current_output:
       - 12.0
       - 5.0
       total_frames: 15
-      average_ilium_angle_baseline: 2.86  # Added
-      custom: {}  # Added
-    recorded_error: null
+      average_ilium_angle_baseline: 2.86
+      custom: {}
+    recorded_error:
     keyphrase: default_US
   xray:
     metrics:
     - ace_index_left: 28.1
     - ace_index_right: 17.8
-    - wiberg_index_left: 0
-    - wiberg_index_right: 0
-    - ihdi_grade_left: 0
-    - ihdi_grade_right: 0
-    - tonnis_grade_left: 0  # Modified
-    - tonnis_grade_right: 0  # Modified
+    - wiberg_index_left: 0.0
+    - wiberg_index_right: 0.0
+    - ihdi_grade_left: 0.0
+    - ihdi_grade_right: 0.0
+    - tonnis_grade_left: 2.0
+    - tonnis_grade_right: 2.0
     keyphrase: default_xray
     dev_metrics: {}
   us_sweep:
     metrics:
-    - Metric2D(name=alpha, value=69.2)  # Modified
-    - Metric2D(name=coverage, value=0.681)  # Modified
+    - alpha: 69.2
+    - coverage: 0.681
     keyphrase: default_US
     dev_metrics:
       os_ichium_detected: true
       no_frames_segmented: 15
-      no_frames_marked: 10
+      no_frames_marked: 12
       graf_frame: 4
       acetabular_mid_frame: 9
       fem_mid_frame: 7
       critial_error: false
       cr_points: []
       total_frames: 15
-      average_ilium_angle_baseline: 2.86  # Added
-      custom: {}  # Added
+      average_ilium_angle_baseline: 2.86
+      custom: {}
+    recorded_error: ''
   2dus:
     metrics:
-    - Metric2D(name=alpha, value=69.2)  # Modified
-    - Metric2D(name=coverage, value=0.681)  # Modified
+    - alpha: 69.2
+    - coverage: 0.681
     keyphrase: default_US
     dev_metrics:
       os_ichium_detected: true
@@ -84,5 +86,6 @@ current_output:
       critial_error: false
       cr_points: []
       total_frames: 1
-      average_ilium_angle_baseline: 2.41  # Added
-      custom: {}  # Added
+      average_ilium_angle_baseline: 2.41
+      custom: {}
+    recorded_error: ''

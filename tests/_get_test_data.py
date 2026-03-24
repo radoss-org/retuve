@@ -46,6 +46,9 @@ from retuve.defaults.hip_configs import (
     test_default_3DUS_custom,
 )
 
+default_xray.batch.debug = True
+test_default_US.batch.debug = True
+
 # DISCLAIMER
 # =======================
 # Before running this code, please read the following disclaimer carefully:
@@ -68,7 +71,7 @@ If you do not agree to these terms, do not proceed with running these tests.
 Please type "yes" to confirm that you have read and agree to the terms of the CC BY-NC-SA 3.0 license.
 """)
 
-if os.environ.get("RETUVE_DISABLE_WARNING").lower() != "true":
+if os.environ.get("RETUVE_DISABLE_WARNING", "").lower() != "true":
     user_input = input(
         "Do you agree to the terms of the CC BY-NC-SA 3.0 license? (Type 'yes' to continue): "
     )
@@ -178,7 +181,8 @@ visual_3d.write_html(f"{test_data_dir}/visual_3d_us.html")
 
 
 # Example usage
-img_file, labels_json = download_case(Cases.XRAY_JPG, directory="./tests/test-data")
+img_file, labels_json = download_case(
+    Cases.XRAY_JPG, directory="./tests/test-data")
 
 img_raw = Image.open(img_file)
 labels = json.load(open(labels_json))
@@ -239,11 +243,6 @@ img.save(f"{test_data_dir}/img_2dus.jpg")
 json_file_us = hip_data.json_dump(test_default_US, dev_metrics)
 
 
-# ------------------------------------------------------------------------------
-# Generate 2DUS and X-ray images with a custom post-draw overlay
-# ------------------------------------------------------------------------------
-
-
 hip_custom, img_custom, dev_custom = analyse_hip_2DUS(
     img=images[FRAME],
     keyphrase=test_default_US_custom,
@@ -288,12 +287,13 @@ hip_c3d, video_c3d, visual3d_c3d, dev_c3d = analyse_hip_3DUS(
 
 # Extract and save the Graf frame from the generated video
 try:
-    graf_idx = getattr(hip_c3d, "graf_frame", None)
+    graf_idx = hip_c3d.graf_frame
     if graf_idx is not None:
         # Iterate frames to the Graf index and save that frame
         for i, frame in enumerate(video_c3d.iter_frames(dtype="uint8")):
             if i == graf_idx:
-                Image.fromarray(frame).save(f"{test_data_dir}/img_3dus_custom.jpg")
+                Image.fromarray(frame).save(
+                    f"{test_data_dir}/img_3dus_custom.jpg")
                 break
 except Exception:
     pass
@@ -351,7 +351,8 @@ def mark_changes(new_data, old_data, path=""):
         for key in new_data.keys():
             full_path = f"{path}.{key}" if path else key
             if key in old_data:
-                new_data[key] = mark_changes(new_data[key], old_data[key], full_path)
+                new_data[key] = mark_changes(
+                    new_data[key], old_data[key], full_path)
             else:
                 # Key is new, mark it as added
                 new_data[key] = f"{new_data[key]}  # Added"
@@ -359,7 +360,8 @@ def mark_changes(new_data, old_data, path=""):
         # Compare lists by index
         for i in range(len(new_data)):
             if i < len(old_data):
-                new_data[i] = mark_changes(new_data[i], old_data[i], f"{path}[{i}]")
+                new_data[i] = mark_changes(
+                    new_data[i], old_data[i], f"{path}[{i}]")
             else:
                 # Item is new in the list
                 new_data[i] = f"{new_data[i]}  # Added"
@@ -415,7 +417,8 @@ if previous_data is None or has_changes(
     with open(new_filename, "r") as f:
         content = f.read()
         content = content.replace("'", "")
-        content = content.replace("recorded_error:   # Modified", "recorded_error: ''")
+        content = content.replace(
+            "recorded_error:   # Modified", "recorded_error: ''")
     with open(new_filename, "w") as f:
         f.write(content)
 

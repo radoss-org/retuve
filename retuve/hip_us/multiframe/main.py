@@ -38,6 +38,7 @@ from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import MetricUS
 from retuve.logs import ulogger
 from retuve.utils import rmean
+from retuve.custom import get_per_frame_3dus_metrics
 
 
 class FemSphere:
@@ -158,40 +159,7 @@ def get_3d_metrics_and_visuals(
                 )
             )
 
-    # Also aggregate any custom per-frame metric function outputs
-    per_frame_funcs = getattr(config.hip, "per_frame_metric_functions", []) or []
-    custom_names: List[str] = []
-    for pf in per_frame_funcs:
-        if isinstance(pf, tuple):
-            custom_names.append(pf[0])
-        else:
-            custom_names.append(getattr(pf, "__name__", "custom"))
-
-    for name in custom_names:
-        if not any(metric.name == name for metric in hip_datas.metrics):
-            post_values = [
-                hip_data.get_metric(name)
-                for hip_data in hip_datas
-                if hip_data.side == Side.POST and hip_data.get_metric(name) != 0
-            ] or [0]
-            ant_values = [
-                hip_data.get_metric(name)
-                for hip_data in hip_datas
-                if hip_data.side == Side.ANT and hip_data.get_metric(name) != 0
-            ] or [0]
-
-            graf_value = 0
-            if hip_datas.graf_frame is not None:
-                graf_value = hip_datas.grafs_hip.get_metric(name)
-
-            hip_datas.metrics.append(
-                Metric3D(
-                    name=name,
-                    graf=graf_value,
-                    post=rmean(post_values),
-                    ant=rmean(ant_values),
-                )
-            )
+    hip_datas = get_per_frame_3dus_metrics(hip_datas, config)
 
     if all(metric.post == 0 for metric in hip_datas.metrics):
         hip_datas.recorded_error.append("No Posterior values recorded.")
@@ -206,7 +174,8 @@ def get_3d_metrics_and_visuals(
     else:
         fem_sph = None
 
-    ulogger.info(f"Time for all 3D Elements: {round(time.time() - start, 2)} s")
+    ulogger.info(
+        f"Time for all 3D Elements: {round(time.time() - start, 2)} s")
 
     return (
         hip_datas,

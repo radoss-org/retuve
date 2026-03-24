@@ -31,7 +31,8 @@ def test_draw_hips_us(hip_datas_us, results_us, config_us, fem_sph, img_shape_us
 
     assert isinstance(images, list)
     assert isinstance(images[0], np.ndarray)
-    assert images[0].shape == (img_shape_us[1], img_shape_us[0], 3)
+    # Double because we put the original image next to the overlayed image
+    assert images[0].shape == (img_shape_us[1], img_shape_us[0] * 2, 3)
 
 
 def test_draw_table(hip_datas_us, img_shape_us):

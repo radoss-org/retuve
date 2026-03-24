@@ -26,7 +26,7 @@ import numpy as np
 from filelock import FileLock
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.enums import HipLabelsUS
-from retuve.hip_us.classes.general import HipDatasUS
+from retuve.hip_us.classes.general import HipDatasUS, HipDataUS
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import GrafSelectionMethod, MetricUS
 from retuve.logs import ulogger
@@ -94,7 +94,8 @@ def _get_apex_right_distance(hip) -> float:
     # there is also hip.landmarks.left
     apex_right_distance = 0
     if hip.landmarks and hip.landmarks.apex and hip.landmarks.right:
-        apex_right_distance = abs(hip.landmarks.apex[1] - hip.landmarks.right[1])
+        apex_right_distance = abs(
+            hip.landmarks.apex[1] - hip.landmarks.right[1])
 
     return apex_right_distance
 
@@ -106,7 +107,8 @@ def _get_femoral_head_roundness(seg_frame_objs) -> float:
     roundness_ratio = 0
     if len(femoral_head) != 0:
         foreground_mask = (
-            np.all(femoral_head[0].mask == [255, 255, 255], axis=-1).astype(np.uint8)
+            np.all(femoral_head[0].mask == [255, 255, 255],
+                   axis=-1).astype(np.uint8)
             * 255
         )
 
@@ -169,7 +171,8 @@ def graf_frame_algo(
 
     # Gives values between 1 and 7
     alpha_normalisation = max_alpha / 4
-    alpha_value = round(hip_data.get_metric(MetricUS.ALPHA) / alpha_normalisation, 2)
+    alpha_value = round(hip_data.get_metric(
+        MetricUS.ALPHA) / alpha_normalisation, 2)
 
     line_flattness_normalisation = 2
     # Gives values varying between 0 and 10
@@ -181,7 +184,8 @@ def graf_frame_algo(
     image_area = seg_frame_objs.img.shape[0] * seg_frame_objs.img.shape[1]
 
     os_ichium_normalisation = image_area / 140
-    os_ichium_value = _get_os_ichium_area(seg_frame_objs) / os_ichium_normalisation
+    os_ichium_value = _get_os_ichium_area(
+        seg_frame_objs) / os_ichium_normalisation
 
     # do the same thing for the femoral head
     femoral_head_normalisation = image_area / 14
@@ -268,7 +272,7 @@ def graf_frame_algo(
             with open(json_file_path, "w") as f:
                 json.dump(hip_data_dict, f, indent=4)
 
-    return final_score
+    return final_score, []
 
 
 @warning_decorator(alpha=True)
@@ -294,7 +298,7 @@ def find_graf_plane(
         return hip_datas
 
     hip_datas.graf_confs = []
-    hip_datas.graf_frame = None
+    hip_datas.graf_frame = hip_datas[0].frame_no
     hip_datas.grafs_hip = HipDataUS(
         frame_no=hip_datas[0].frame_no,
     )
@@ -361,7 +365,7 @@ def find_graf_plane_manual_features(
     if not valid_frames_data:
         print("No good graf frames found")
         hip_datas.recorded_error.append(
-            "No Perfect Grafs Frames found - some anatomy missing."
+            "No Perfect Grafs Frames found."
         )
         hip_datas.recorded_error.critical = True
         if just_graf_confs:
@@ -376,7 +380,8 @@ def find_graf_plane_manual_features(
     # We still need max_alpha from the whole set or the valid set?
     # Usually max_alpha is used to normalize.
     # Here we use the valid subset to find max_alpha.
-    max_alpha = max([h.get_metric(MetricUS.ALPHA) for h, _ in valid_frames_data])
+    max_alpha = max([h.get_metric(MetricUS.ALPHA)
+                    for h, _ in valid_frames_data])
 
     all_illiums = [h for h in hip_datas if h.get_metric(MetricUS.ALPHA) != 0]
 
@@ -424,7 +429,8 @@ def find_graf_plane_manual_features(
 
     hip_datas.graf_confs = [conf_map[h.frame_no] for h in hip_datas]
     hip_datas.graf_frame = best_frame_no
-    hip_datas.grafs_hip = next(h for h in hip_datas if h.frame_no == best_frame_no)
+    hip_datas.grafs_hip = next(
+        h for h in hip_datas if h.frame_no == best_frame_no)
     hip_datas.feature_score_map = feature_score_map
 
     return hip_datas

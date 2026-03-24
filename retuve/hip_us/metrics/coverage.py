@@ -64,7 +64,7 @@ def find_cov_landmarks(
     if diameter_1 == 0 or diameter_2 == 0:
         return landmarks
 
-    if getattr(config.hip, "allow_neutral_femoral_heads", False) == False:
+    if config.hip.allow_neutral_femoral_heads == False:
         # Reject frames with a non-circular femoral head
         if abs((diameter_1 - diameter_2) / diameter_1) > 0.35:
             return landmarks
@@ -75,7 +75,8 @@ def find_cov_landmarks(
     radius = diameter / 2
 
     center = (
-        int((abs(most_left_point[0] - most_right_point[0]) / 2) + most_left_point[0]),
+        int((abs(most_left_point[0] - most_right_point[0]
+                 ) / 2) + most_left_point[0]),
         int(top_most_point[1] + radius),
     )
 

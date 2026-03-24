@@ -70,6 +70,7 @@ class HipConfig:
         post_draw_functions: List[Any] = None,
         use_polyfit_replace_apex: bool = True,
         count_0_coverage_as_error: bool = False,
+        allow_neutral_femoral_heads: bool = True,
     ):
         """
         The Hip Subconfig.
@@ -106,6 +107,7 @@ class HipConfig:
         :param post_draw_functions (list[callable|tuple[str, callable]]): Drawing hooks executed after base drawing. Each callable MUST have signature (hip, overlay, config) and MUST return an Overlay (or None to skip). For US, use hip.side to detect Graf/Ant/Post as needed.
         :param use_polyfit_replace_apex (bool): Use polyfit to replace apex outliers.
         :param count_0_coverage_as_error (bool): Count 0 coverage as an error.
+        :param allow_neutral_femoral_heads (bool): Allow neutral femoral heads.
         """
         self.midline_color = midline_color
         self.aca_split = aca_split
@@ -136,6 +138,7 @@ class HipConfig:
         self.post_draw_functions = post_draw_functions or []
         self.use_polyfit_replace_apex = use_polyfit_replace_apex
         self.count_0_coverage_as_error = count_0_coverage_as_error
+        self.allow_neutral_femoral_heads = allow_neutral_femoral_heads
 
 
 class TrakConfig:

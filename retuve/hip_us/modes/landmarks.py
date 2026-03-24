@@ -35,54 +35,31 @@ def _polyfit_replace_apex(
     degree: int = 2,
     max_pixel_err: float = 8.0,
 ) -> None:
-    """
-    Replace apex outliers using a simple polyfit across frames (time as z).
+    "Smooths apex point along frames using polyfit, replacing points with large residuals."
+    pts = [
+        (i, float(x), float(y))
+        for i, lm in enumerate(list_landmarks)
+        if lm and lm.apex is not None and lm.apex[0] is not None and lm.apex[1] is not None
+        for x, y in [lm.apex]
+    ]
 
-    Fits a polynomial separately for x(t) and y(t) over frames with valid apex,
-    then replaces any apex whose distance to the fit exceeds max_pixel_err.
-
-    This function mutates list_landmarks in-place and keeps things simple:
-    - ignores frames with missing apex
-    - does not attempt to in-fill missing apex
-    - guards for small sample sizes
-    """
-    # Collect indices and apex coords where available
-    idxs = []
-    xs = []
-    ys = []
-    for i, lm in enumerate(list_landmarks):
-        if lm and lm.apex is not None:
-            x, y = lm.apex
-            if x is None or y is None:
-                continue
-            idxs.append(i)
-            xs.append(float(x))
-            ys.append(float(y))
-
-    # Need enough points to fit the requested degree
-    if len(idxs) < max(degree + 1, 3):
+    if len(pts) < max(degree + 1, 3):
         return
 
-    t = np.array(idxs, dtype=float)
-    x_arr = np.array(xs, dtype=float)
-    y_arr = np.array(ys, dtype=float)
+    idxs = np.array([i for i, _, _ in pts], dtype=float)
+    xs = np.array([x for _, x, _ in pts], dtype=float)
+    ys = np.array([y for _, _, y in pts], dtype=float)
 
-    # Fit polynomials x(t), y(t)
     try:
-        px = np.poly1d(np.polyfit(t, x_arr, deg=degree))
-        py = np.poly1d(np.polyfit(t, y_arr, deg=degree))
+        px = np.poly1d(np.polyfit(idxs, xs, deg=degree))
+        py = np.poly1d(np.polyfit(idxs, ys, deg=degree))
     except Exception:
-        # Be conservative: if fit fails, do nothing
         return
 
-    # Replace outliers
-    for i, x_true, y_true in zip(idxs, x_arr, y_arr):
-        x_fit = float(px(i))
-        y_fit = float(py(i))
-        # Euclidean residual in pixels
+    for i, x_true, y_true in pts:
+        x_fit, y_fit = float(px(i)), float(py(i))
         resid = ((x_true - x_fit) ** 2 + (y_true - y_fit) ** 2) ** 0.5
         if resid > max_pixel_err:
-            # Replace with rounded ints to match tuple[int, int]
             lm = list_landmarks[i]
             list_landmarks[i] = LandmarksUS(
                 left=lm.left,

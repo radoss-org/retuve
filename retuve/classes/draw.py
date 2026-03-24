@@ -27,12 +27,6 @@ from retuve.hip_us.classes.general import LandmarksUS
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Colors
 from scipy.spatial import KDTree
-<< << << < HEAD
-
-# No midline curve will ever be more complex than this
-POLY_DEGREE = 5
-== == == =
->>>>>> > 814428743a749f21b2e2b80e75c5494a696022d9
 
 
 class DrawTypes(Enum):

@@ -42,7 +42,7 @@ def landmark_count_metric(hip, seg_frame_objs, config):
 
     Must return: (value, aux_dict)
     """
-    lm = getattr(hip, "landmarks", None)
+    lm = hip.landmarks
     if lm is None:
         return 0.0, {"count": 0}
     value = float(sum(1 for v in vars(lm).values() if v is not None))
@@ -52,9 +52,8 @@ def landmark_count_metric(hip, seg_frame_objs, config):
 def draw_xray_count(hip, overlay, config):
     """Draw the landmark count onto the image."""
     count = hip.get_metric("landmark count")
-    # If our metric didn't run for any reason, fallback to direct counting
     if not count:
-        lm = getattr(hip, "landmarks", None)
+        lm = hip.landmarks
         count = sum(1 for v in vars(lm).values() if v is not None) if lm else 0
     overlay.draw_text(f"count: {int(count)}", 10, 10, header="h1", grafs=True)
     return overlay
@@ -63,7 +62,8 @@ def draw_xray_count(hip, overlay, config):
 # --- Build a custom config --------------------------------------------------
 
 custom_xray = default_xray.get_copy()
-custom_xray.hip.per_frame_metric_functions = [("landmark count", landmark_count_metric)]
+custom_xray.hip.per_frame_metric_functions = [
+    ("landmark count", landmark_count_metric)]
 custom_xray.hip.post_draw_functions = [("xray count", draw_xray_count)]
 
 

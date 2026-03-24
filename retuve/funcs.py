@@ -55,6 +55,7 @@ from retuve.keyphrases.config import Config, OperationType
 from retuve.keyphrases.enums import HipMode
 from retuve.logs import ulogger
 from retuve.typehints import GeneralModeFuncType
+from retuve.custom import get_all_custom_metrics, get_per_frame_xray
 
 
 def get_fps(no_of_frames: int, min_fps=30, min_vid_length=6) -> int:
@@ -95,28 +96,7 @@ def process_landmarks_xray(
     """
     hip_datas_xray = landmarks_2_metrics_xray(landmark_results, config)
 
-    # Run custom per-image metric functions (standardized signature)
-    per_frame_funcs = getattr(config.hip, "per_frame_metric_functions", []) or []
-    if per_frame_funcs:
-        for hip, seg_frame_objs in zip(hip_datas_xray, seg_results):
-            for pf_name, pf_func in [
-                (
-                    (pf[0], pf[1])
-                    if isinstance(pf, tuple)
-                    else (getattr(pf, "__name__", "custom"), pf)
-                )
-                for pf in per_frame_funcs
-            ]:
-                out = pf_func(hip, seg_frame_objs, config)
-                value, dev_extra = (None, None)
-                if isinstance(out, tuple) and len(out) == 2:
-                    value, dev_extra = out
-                else:
-                    value = out
-                if value is not None:
-                    if hip.metrics is None:
-                        hip.metrics = []
-                    hip.metrics.append(Metric2D(name=pf_name, value=value))
+    hip_datas_xray = get_per_frame_xray(hip_datas_xray, seg_results, config)
 
     image_arrays = draw_hips_xray(hip_datas_xray, seg_results, config)
     return hip_datas_xray, image_arrays
@@ -144,148 +124,12 @@ def process_segs_us(
     :return: The hip datas, the results, and the shape.
     """
 
-    results: List[SegFrameObjects] = modes_func(file, config, **modes_func_kwargs_dict)
+    results: List[SegFrameObjects] = modes_func(
+        file, config, **modes_func_kwargs_dict)
     results, shape = pre_process_segs_us(results, config)
 
-    # Run any custom segmentation pre-process hooks
-    for preprocess in getattr(config.hip, "seg_preprocess_functions", []) or []:
-        try:
-            name, func = (
-                preprocess if isinstance(preprocess, tuple) else (None, preprocess)
-            )
-            updated = None
-            # Try signatures: (results, config), (results,), (results, config, shape)
-            for args in [
-                (results, config),
-                (results,),
-                (results, config, shape),
-            ]:
-                try:
-                    updated = func(*args)
-                    break
-                except TypeError:
-                    continue
-            if updated is not None:
-                results = updated
-        except Exception as e:
-            if config.batch.debug == True:
-                raise e
-            ulogger.error(
-                f"Seg preprocess function {getattr(preprocess, '__name__', str(preprocess))} failed: {e}"
-            )
-
-    if config.test_data_passthrough:
-        pre_edited_results = copy.deepcopy(results)
-
-    landmarks, all_seg_rejection_reasons, ilium_angle_baselines = segs_2_landmarks_us(
-        results, config
-    )
-
-    if config.test_data_passthrough:
-        pre_edited_landmarks = copy.deepcopy(landmarks)
-
-    hip_datas = landmarks_2_metrics_us(landmarks, shape, config)
-    hip_datas.all_seg_rejection_reasons = all_seg_rejection_reasons
-    hip_datas.ilium_angle_baselines = ilium_angle_baselines
-
-    # Initialize a container for any custom dev metrics returned by full_metric_functions
-    if (
-        not hasattr(hip_datas, "dev_metrics_custom")
-        or hip_datas.dev_metrics_custom is None
-    ):
-        hip_datas.dev_metrics_custom = {}
-
-    # Run custom per-frame metrics functions, if any
-    per_frame_funcs = getattr(config.hip, "per_frame_metric_functions", []) or []
-    if per_frame_funcs:
-        try:
-            for hip, seg_frame_objs in zip(hip_datas, results):
-                for pf_name, pf_func in [
-                    (
-                        (pf[0], pf[1])
-                        if isinstance(pf, tuple)
-                        else (getattr(pf, "__name__", "custom"), pf)
-                    )
-                    for pf in per_frame_funcs
-                ]:
-                    out = pf_func(hip, seg_frame_objs, config)
-                    # Expect (value, dev_dict)
-                    value, dev_extra = (None, None)
-                    if isinstance(out, tuple) and len(out) == 2:
-                        value, dev_extra = out
-                    else:
-                        # Back-compat: allow single numeric
-                        value = out
-                    if value is not None:
-                        try:
-                            if hip.metrics is None:
-                                hip.metrics = []
-                            hip.metrics.append(Metric2D(name=pf_name, value=value))
-                        except Exception:
-                            pass
-                    if isinstance(dev_extra, dict):
-                        hip_datas.dev_metrics_custom.setdefault(pf_name, []).append(
-                            dev_extra
-                        )
-        except Exception as e:
-            if config.batch.debug == True:
-                raise e
-            ulogger.error(f"Per-frame metric functions failed: {e}")
-
-    for metric_name, metric_func in config.hip.full_metric_functions:
-        value = 0
-        dev_extra = {}
-        # Try different call signatures: (hip_datas, results, config), (hip_datas, config), (hip_datas)
-        for args in [
-            (hip_datas, results, config),
-            (hip_datas, config),
-            (hip_datas,),
-        ]:
-            try:
-                result = metric_func(*args)
-                # Support multiple return shapes: scalar, (scalar, dict), dict-only
-                if (
-                    isinstance(result, tuple)
-                    and len(result) == 2
-                    and isinstance(result[1], dict)
-                ):
-                    value, dev_extra = result
-                elif isinstance(result, dict):
-                    dev_extra = result
-                    value = 0
-                else:
-                    value = result
-                break
-            except TypeError as e:
-                if "positional argument" in str(e):
-                    continue
-                raise e
-            except Exception as e:
-                if config.batch.debug == True:
-                    raise e
-                value = 0
-                ulogger.error(f"Full metric function failed: {e}")
-                break
-
-        if getattr(hip_datas, "custom_metrics", None) is None:
-            hip_datas.custom_metrics = []
-
-        if not called_by_2dus:
-            custom_metric = Metric3D(name=metric_name, full=value)
-            hip_datas.custom_metrics.append(custom_metric)
-        else:
-            custom_metric = Metric2D(name=metric_name, value=value)
-            hip_datas.custom_metrics.append(custom_metric)
-
-        # Aggregate any custom dev metrics returned by this metric function
-        if dev_extra:
-            try:
-                # Group dev extras by the metric name for clarity
-                if metric_name not in hip_datas.dev_metrics_custom:
-                    hip_datas.dev_metrics_custom[metric_name] = {}
-                hip_datas.dev_metrics_custom[metric_name].update(dev_extra)
-            except Exception:
-                pass
+    hip_datas, pre_edited_results, pre_edited_landmarks = get_all_custom_metrics(
+        results, shape, config, called_by_2dus=called_by_2dus)
 
     if config.test_data_passthrough:
         hip_datas.pre_edited_results = pre_edited_results
@@ -324,7 +168,8 @@ def analyse_hip_xray_2D(
     elif isinstance(img, Image.Image):
         data = [img]
     else:
-        raise ValueError(f"Invalid image type: {type(img)}. Expected Image or DICOM.")
+        raise ValueError(
+            f"Invalid image type: {type(img)}. Expected Image or DICOM.")
 
     if config.operation_type in OperationType.LANDMARK:
         landmark_results, seg_results = modes_func(
@@ -507,7 +352,7 @@ def analyse_hip_3DUS(
         hip_datas.avg_normals_data = avg_normals_data
         hip_datas.normals_data = normals_data
 
-    if getattr(hip_datas, "custom_metrics", None) is not None:
+    if hip_datas.custom_metrics is not None:
         hip_datas.metrics += hip_datas.custom_metrics
 
     return (
@@ -572,7 +417,7 @@ def analyse_hip_2DUS(
     if return_seg_info:
         hip.seg_info = results
 
-    if getattr(hip_datas, "custom_metrics", None) is not None:
+    if hip_datas.custom_metrics is not None:
         hip.metrics += hip_datas.custom_metrics
 
     return hip, image, hip_datas.dev_metrics
@@ -642,8 +487,10 @@ def analyse_hip_2DUS_sweep(
                 graf_image = min(
                     marked_pairs,
                     key=lambda pair: (
-                        abs(pair[0].landmarks.left[1] - pair[0].landmarks.apex[1]),
-                        -abs(pair[0].landmarks.apex[0] - pair[0].landmarks.left[0]),
+                        abs(pair[0].landmarks.left[1] -
+                            pair[0].landmarks.apex[1]),
+                        -abs(pair[0].landmarks.apex[0] -
+                             pair[0].landmarks.left[0]),
                     ),
                 )[1]
 
@@ -663,7 +510,7 @@ def analyse_hip_2DUS_sweep(
         ),
     )
 
-    if getattr(hip_datas, "custom_metrics", None) is not None and graf_hip.metrics:
+    if hip_datas.custom_metrics is not None and graf_hip.metrics:
         graf_hip.metrics += hip_datas.custom_metrics
 
     return graf_hip, graf_image, hip_datas.dev_metrics, video_clip
@@ -741,6 +588,7 @@ def retuve_run(
 
             dump = hip.json_dump(config, dev_metrics)
             dump["landmarks"] = dict(hip.landmarks.items())
+
         return RetuveResult(dump, image=image, hip=hip)
 
     elif hip_mode == HipMode.US2D:

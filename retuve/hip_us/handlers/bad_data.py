@@ -47,7 +47,7 @@ def remove_outliers(hip_datas: HipDatasUS, config: Config) -> List[bool]:
     max_true_index = 0
 
     for i in range(len(pred_made) - total_true + 1):
-        current_window_true = sum(pred_made[i : i + total_true])
+        current_window_true = sum(pred_made[i: i + total_true])
         if current_window_true > max_true:
             max_true = current_window_true
             max_true_index = i
@@ -99,7 +99,8 @@ def apex_right_points_too_close(hip: HipDataUS) -> bool:
         return True
 
     return (
-        np.linalg.norm(np.array(hip.landmarks.right) - np.array(hip.landmarks.apex))
+        np.linalg.norm(np.array(hip.landmarks.right) -
+                       np.array(hip.landmarks.apex))
         < 30
     )
 
@@ -114,8 +115,7 @@ def handle_bad_frames(hip_datas: HipDatasUS, config: Config) -> HipDatasUS:
     :return: HipDatasUS object.
     """
 
-    # NOTE: I do not like this
-    if getattr(hip_datas, "bad_frame_reasons", None) is not None:
+    if hip_datas.bad_frame_reasons is not None:
         return hip_datas
 
     if config.batch.hip_mode == HipMode.US2DSW:
@@ -165,11 +165,6 @@ def handle_bad_frames(hip_datas: HipDatasUS, config: Config) -> HipDatasUS:
             hip_datas[i] = empty_hip
             bad_frame_reasons[i] = "Coverage Value Non-Sensical or 0"
             continue
-
-        # if apex_right_points_too_close(hip):
-        #     hip_datas[i] = empty_hip
-        #     bad_frame_reasons[i] = "Apex and Right Too Close"
-        #     continue
 
     hip_datas.bad_frame_reasons = bad_frame_reasons
     return hip_datas

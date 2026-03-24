@@ -116,8 +116,8 @@ class LandmarksXRay:
                 self.pel_l_i,
                 self.pel_r_o,
                 self.pel_r_i,
-                # self.fem_l,
-                # self.fem_r,
+                self.fem_l,
+                self.fem_r,
                 self.h_point_l,
                 self.h_point_r,
             ]
@@ -169,7 +169,7 @@ class HipDataXray:
             if (
                 metric
                 and isinstance(metric, Metric2D)
-                and getattr(metric, "name", None) == name
+                and metric.name == name
             ):
                 # Assume Metric2D.value is numeric; cast to float for consistency.
                 return float(metric.value)

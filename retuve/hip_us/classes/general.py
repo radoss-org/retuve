@@ -127,6 +127,8 @@ class HipDataUS:
 
         self.metrics = metrics
 
+        self.recorded_error: RecordedError = RecordedError()
+
     def __str__(self) -> str:
         return (
             f"HipDataUS(landmarks={self.landmarks}, metrics={self.metrics}, "
@@ -175,7 +177,8 @@ class HipDataUS:
             }
 
         # Serialize Metric2D objects as strings for deterministic comparisons
-        serialized_metrics = [{metric.name: metric.value} for metric in self.metrics]
+        serialized_metrics = [{metric.name: metric.value}
+                              for metric in self.metrics]
         return {
             "metrics": serialized_metrics,
             "keyphrase": config.name,
@@ -212,12 +215,19 @@ class HipDatasUS:
         self.graf_frame: int = None
         self.grafs_hip: HipDataUS = None
         self.dev_metrics: DevMetricsUS = None
-        # Temporary collector for custom dev metrics from full_metric_functions
-        self.dev_metrics_custom: Dict[str, object] = {}
+        self.graf_confs = []
+        self.feature_score_map = {}
+
         self.video_clip: ImageSequenceClip = None
         self.visual_3d: Figure = None
         self.nifti: NIFTI = None
         self.cr_points: List[float] = []
+
+        self.bad_frame_reasons = None
+
+        # Temporary collector for custom dev metrics from full_metric_functions
+        self.dev_metrics_custom: Dict[str, object] = {}
+        self.custom_metrics = None
 
     def __iter__(self) -> HipDataUS:
         return iter(self.hip_datas)

@@ -58,7 +58,7 @@ def expected_us_metrics(metrics_3d_us, metrics_2d_us):
             try:
                 content = item.strip()
                 if content.startswith("Metric2D(") and content.endswith(")"):
-                    inner = content[len("Metric2D(") : -1]
+                    inner = content[len("Metric2D("): -1]
                     parts = [p.strip() for p in inner.split(",")]
                     kv = {}
                     for p in parts:

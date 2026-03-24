@@ -65,7 +65,7 @@ def _seg_object_count(hip, seg_frame_objs, config):
     return float(len(seg_frame_objs)), None
 
 
-def _draw_us_seg_count(hip, overlay, config):
+def _draw_us_seg_count(hip, seg_frame_objs, overlay, config):
     count = hip.get_metric("seg object count")
     overlay.draw_text(f"count: {count}", 50, 50, header="h2")
 
@@ -73,7 +73,8 @@ def _draw_us_seg_count(hip, overlay, config):
 test_default_US_custom.hip.per_frame_metric_functions = [
     ("seg object count", _seg_object_count)
 ]
-test_default_US_custom.hip.post_draw_functions = [("us seg count", _draw_us_seg_count)]
+test_default_US_custom.hip.post_draw_functions = [
+    ("us seg count", _draw_us_seg_count)]
 
 test_default_xray_custom = default_xray.get_copy()
 
@@ -81,7 +82,7 @@ test_default_xray_custom = default_xray.get_copy()
 # Example custom per-image metric for XRAY
 def landmark_count_metric(hip, seg_frame_objs, config):
     try:
-        lm = getattr(hip, "landmarks", None)
+        lm = hip.landmarks
         if lm is None:
             return None, {}
         value = float(sum(1 for v in vars(lm).values() if v is not None))
@@ -91,14 +92,16 @@ def landmark_count_metric(hip, seg_frame_objs, config):
 
 
 # Example custom post-draw function for XRAY: draw landmark count
-def draw_xray_count(hip, overlay, config):
+def draw_xray_count(hip, seg_frame_objs, overlay, config):
     try:
         count = hip.get_metric("landmark count")
         if not count:
-            lm = getattr(hip, "landmarks", None)
-            count = sum(1 for v in vars(lm).values() if v is not None) if lm else 0
+            lm = hip.landmarks
+            count = sum(1 for v in vars(lm).values()
+                        if v is not None) if lm else 0
         # Use graf colors for stronger contrast on x-ray
-        overlay.draw_text(f"count: {int(count)}", 10, 10, header="h1", grafs=True)
+        overlay.draw_text(f"count: {int(count)}",
+                          10, 10, header="h1", grafs=True)
     except Exception:
         pass
     return overlay
@@ -111,9 +114,6 @@ test_default_xray_custom.hip.post_draw_functions = [
     ("xray count", draw_xray_count),
 ]
 
-# -----------------------------------------------------------------------------
-# 3DUS: Example custom full metric and graf-frame drawing
-# -----------------------------------------------------------------------------
 
 test_default_3DUS_custom = default_US.get_copy()
 
@@ -124,16 +124,14 @@ def _scan_quality_graf(hip_datas, results, config):
         from retuve.hip_us.multiframe import find_graf_plane
 
         hip_datas = find_graf_plane(hip_datas, results, config)
-        if getattr(hip_datas, "graf_frame", None) is None or not getattr(
-            hip_datas, "graf_confs", []
-        ):
+        if hip_datas.graf_frame is None or not hip_datas.graf_confs:
             return 0.0
         return float(round(hip_datas.graf_confs[hip_datas.graf_frame], 2))
     except Exception:
         return 0.0
 
 
-def _draw_seg_count_on_graf(hip, overlay, config):
+def _draw_seg_count_on_graf(hip, seg_frame_objs, overlay, config):
     """Draw a simple counter only on the Graf frame.
 
     Reuses the per-frame metric from the US example ("seg object count").
@@ -141,10 +139,11 @@ def _draw_seg_count_on_graf(hip, overlay, config):
     try:
         from retuve.hip_us.classes.enums import Side
 
-        if getattr(hip, "side", None) != Side.GRAF:
+        if hip.side != Side.GRAF:
             return overlay
         count = hip.get_metric("seg object count") or 0
-        overlay.draw_text(f"count: {int(count)}", 20, 20, header="h2", grafs=True)
+        overlay.draw_text(f"count: {int(count)}",
+                          20, 20, header="h2", grafs=True)
     except Exception:
         pass
     return overlay
