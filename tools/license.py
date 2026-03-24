@@ -55,7 +55,7 @@ def process_directory(directory):
 
 
 if __name__ == "__main__":
-    target_directories = ["./radstract", "./examples", "./tests"]
+    target_directories = ["./retuve", "./examples", "./tests"]
 
     for target_directory in target_directories:
         if os.path.isdir(target_directory):
