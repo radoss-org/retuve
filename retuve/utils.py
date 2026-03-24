@@ -158,7 +158,8 @@ def rotate_in_place(p1, p2, angle_deg=45):
     """
     v = np.array(p2) - np.array(p1)
     theta = np.deg2rad(angle_deg)
-    rot = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+    rot = np.array([[np.cos(theta), -np.sin(theta)],
+                   [np.sin(theta), np.cos(theta)]])
     p2_rot = np.array(p1) + rot @ v
     return p1, p2_rot
 
@@ -212,31 +213,20 @@ def point_left_right(p1: tuple, p2: tuple, p3: tuple) -> float:
     x2, y2 = p2
     x3, y3 = p3
 
-    # Extend the line segment by 1000 pixels in both directions
-    if x1 == x2:
-        # Vertical line case - extend in y direction instead
-        if y2 > y1:
-            extended_y1 = y1 - EXTENSION_LINE_LENGTH
-            extended_y2 = y2 + EXTENSION_LINE_LENGTH
-        else:
-            extended_y1 = y1 + EXTENSION_LINE_LENGTH
-            extended_y2 = y2 - EXTENSION_LINE_LENGTH
-        extended_x1, extended_x2 = x1, x2
-    else:
-        # Calculate slope and extend in x direction
-        slope = (y2 - y1) / (x2 - x1)
+    dx = x2 - x1
+    dy = y2 - y1
 
-        # Extend leftward from the leftmost point
-        if x1 < x2:
-            extended_x1 = x1 - EXTENSION_LINE_LENGTH
-            extended_y1 = y1 - slope * EXTENSION_LINE_LENGTH
-            extended_x2 = x2 + EXTENSION_LINE_LENGTH
-            extended_y2 = y2 + slope * EXTENSION_LINE_LENGTH
-        else:
-            extended_x1 = x1 + EXTENSION_LINE_LENGTH
-            extended_y1 = y1 + slope * EXTENSION_LINE_LENGTH
-            extended_x2 = x2 - EXTENSION_LINE_LENGTH
-            extended_y2 = y2 - slope * EXTENSION_LINE_LENGTH
+    if dx == 0 and dy == 0:
+        raise ValueError("Cannot extend a zero-length line segment")
+
+    length = (dx * dx + dy * dy) ** 0.5
+    ux = dx / length
+    uy = dy / length
+
+    extended_x1 = x1 - ux * EXTENSION_LINE_LENGTH
+    extended_y1 = y1 - uy * EXTENSION_LINE_LENGTH
+    extended_x2 = x2 + ux * EXTENSION_LINE_LENGTH
+    extended_y2 = y2 + uy * EXTENSION_LINE_LENGTH
 
     # Use extended points for the rest of the calculation
     x1, y1 = extended_x1, extended_y1

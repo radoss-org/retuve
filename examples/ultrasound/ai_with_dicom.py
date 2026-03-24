@@ -13,28 +13,31 @@
 # limitations under the License.
 
 import pydicom
+from retuve_yolo_plugin.ultrasound import yolo_predict_dcm_us
 
 from retuve.defaults.hip_configs import default_US
-from retuve.defaults.manual_seg import manual_predict_us_dcm
-from retuve.funcs import analyse_hip_2DUS_sweep
+
+# to do a simple sweep analysis,
+# from retuve.funcs import analyse_hip_2DUS_sweep
+# instead (examples/high_level_functions/2dus_sweep.py)
+from retuve.funcs import analyse_hip_3DUS
 from retuve.testdata import Cases, download_case
 
-# Example usage
 # dcm_file = "path/to/file"
-# seg_file = "/path/to/nifti"
-dcm_file, seg_file = download_case(Cases.ULTRASOUND_DICOM)
+dcm_file, _ = download_case(Cases.ULTRASOUND_DICOM)
 
+default_US.device = "cpu"
 dcm = pydicom.dcmread(dcm_file)
-
-hip_datas, img, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
+hip_datas, video_clip, visual_3d, dev_metrics = analyse_hip_3DUS(
     dcm,
     keyphrase=default_US,
-    modes_func=manual_predict_us_dcm,
-    modes_func_kwargs_dict={"seg": seg_file},
+    modes_func=yolo_predict_dcm_us,
+    modes_func_kwargs_dict={},
 )
 
-video_clip.write_videofile("2dus_sweep.mp4")
-img.save("2dus_sweep.png")
 
-metrics = hip_datas.json_dump(default_US, dev_metrics)
+video_clip.write_videofile("3dus.mp4")
+visual_3d.write_html("3dus.html")
+
+metrics = hip_datas.json_dump(default_US)
 print(metrics)

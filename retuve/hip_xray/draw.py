@@ -58,8 +58,6 @@ def draw_hips_xray(
 
         overlay = Overlay((final_image.shape[0], final_image.shape[1], 3), config)
 
-        # overlay = draw_seg(final_seg_frame_objs, overlay, config)
-
         overlay = draw_landmarks(final_hip, overlay, override_line_thickness=6)
 
         overlay = draw_ace(final_hip, overlay, config)

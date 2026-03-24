@@ -27,9 +27,12 @@ from retuve.hip_us.classes.general import LandmarksUS
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Colors
 from scipy.spatial import KDTree
+<< << << < HEAD
 
 # No midline curve will ever be more complex than this
 POLY_DEGREE = 5
+== == == =
+>>>>>> > 814428743a749f21b2e2b80e75c5494a696022d9
 
 
 class DrawTypes(Enum):
@@ -80,7 +83,7 @@ class DrawTypes(Enum):
         elif dtype == cls.POINTS:
             return draw.line
         elif dtype == cls.SKEL:
-            return draw.point
+            return draw.line
         elif dtype == cls.CIRCLE:
             return draw.ellipse
         elif dtype == cls.RECTANGLE:
@@ -118,7 +121,10 @@ class Overlay:
             return image
 
         image = Image.fromarray(image)
-        draw = ImageDraw.Draw(image, "RGBA")
+
+        if image.mode != "RGBA":
+            image = image.convert("RGBA")
+        draw = ImageDraw.Draw(image)
 
         # Execute all stored operations
         # go in order of segs, lines, points, text
@@ -146,7 +152,6 @@ class Overlay:
         :return: Image with segmentation overlay.
         """
 
-        # Create empty frame of write shape
         seg_overlay = Image.new("RGB", shape[:2], (0, 0, 0))
         draw = ImageDraw.Draw(seg_overlay)
 
@@ -154,7 +159,8 @@ class Overlay:
             if not seg_obj.empty:
                 draw.polygon(
                     seg_obj.points,
-                    fill=LabelColours.get_color_from_index(seg_obj.cls.value + 1),
+                    fill=LabelColours.get_color_from_index(
+                        seg_obj.cls.value + 1),
                 )
 
         return seg_overlay
@@ -193,7 +199,8 @@ class Overlay:
         self.add_operation(
             DrawTypes.SEGS,
             points,
-            fill=self.config.visuals.seg_color.rgba(self.config.visuals.seg_alpha),
+            fill=self.config.visuals.seg_color.rgba(
+                self.config.visuals.seg_alpha),
         )
 
     def draw_box(self, box: Tuple[int, int, int, int], grafs: bool = False):
@@ -259,7 +266,7 @@ class Overlay:
             y1, x1 = skel[ordered[i]]
             y2, x2 = skel[ordered[i + 1]]
             self.add_operation(
-                DrawTypes.LINES,
+                DrawTypes.SKEL,
                 [(x1, y1), (x2, y2)],
                 fill=self.config.hip.midline_color.rgba(),
                 width=3,

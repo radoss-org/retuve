@@ -13,8 +13,7 @@ All plugins are under their own licenses. Please check the license of the plugin
 - **YOLO plugin for Retuve**:
   Install with:
   ```bash
-  pip install git+https://github.com/radoss-org/retuve
-  pip install git+https://github.com/radoss-org/retuve-yolo-plugin
+  pip install retuve-yolo-plugin
   ```
 - Your X-Ray DICOM files placed in a directory (e.g., `./your/path/`).
 
@@ -38,21 +37,35 @@ Place all your DICOM files in a directory, for example:
 Save the following script as `run_batch_xray.py`:
 
 ```python
+import os
+
 import uvicorn
-from retuve_yolo_plugin.xray import get_yolo_model_xray, yolo_predict_dcm_xray
+from retuve_yolo_plugin.xray import (
+    get_yolo_model_xray,
+    yolo_predict_dcm_xray,
+    yolo_predict_xray,
+)
 
 from retuve.app import app
 from retuve.app.helpers import app_init
 from retuve.batch import run_batch
 from retuve.defaults.hip_configs import default_xray
 from retuve.keyphrases.enums import HipMode
+from retuve.testdata import Cases, download_case
 from retuve.trak.main import run_all_state_machines
+
+# or DATASET_DIR = "path/to/files"
+jpg_file, *_ = download_case(Cases.XRAY_JPG_DATASET)
+DATASET_DIR = os.path.join(os.path.dirname(jpg_file))
 
 my_config = default_xray.get_copy()
 my_config.batch.hip_mode = HipMode.XRAY
-my_config.batch.mode_func = yolo_predict_dcm_xray
+my_config.batch.mode_func = yolo_predict_xray
 my_config.batch.mode_func_args = {"model": get_yolo_model_xray(my_config)}
-my_config.batch.datasets = ["./your/path/"]
+my_config.batch.input_types = [".jpg"]
+my_config.batch.datasets = [DATASET_DIR] # or ["path/to/files"]
+my_config.api.savedir = "./.test-output"
+my_config.device = "cpu"
 
 def setup():
     my_config.register("My Config Name")

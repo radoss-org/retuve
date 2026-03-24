@@ -18,7 +18,6 @@ files. It also has the functions used to make the CLI commands for running
 retuve on a single file or a batch of files.
 """
 
-import copy
 import glob
 import json
 import os
@@ -27,12 +26,15 @@ import time
 import traceback
 
 import numpy as np
-import torch.multiprocessing as multiprocessing
+
+try:
+    import torch.multiprocessing as multiprocessing
+except ImportError:
+    import multiprocessing
 
 from retuve.funcs import retuve_run
 from retuve.keyphrases.config import Config
 from retuve.keyphrases.enums import Outputs
-from retuve.logs import ulogger
 
 
 def run_single(
@@ -86,7 +88,7 @@ def run_single(
         hip_datas = retuve_result.hip_datas
 
         if hip_datas and hip_datas.recorded_error:
-            ulogger.info(
+            print(
                 f"\n Recorded Error: {hip_datas.recorded_error} "
                 f"Critical: {hip_datas.recorded_error.critical}"
             )
@@ -95,7 +97,7 @@ def run_single(
             retuve_result.image.save(f"{savedir}/{fileid}{Outputs.IMAGE}")
 
         if retuve_result.metrics and retuve_result.metrics.get("dev_metrics"):
-            ulogger.info("\n Dev Metrics: ", retuve_result.metrics["dev_metrics"])
+            print("\n Dev Metrics: ", retuve_result.metrics["dev_metrics"])
 
         if retuve_result.video_clip is not None:
             retuve_result.video_clip.write_videofile(
@@ -104,7 +106,8 @@ def run_single(
             retuve_result.video_clip.close()
 
         if retuve_result.visual_3d is not None:
-            retuve_result.visual_3d.write_html(f"{savedir}/{fileid}{Outputs.VISUAL3D}")
+            retuve_result.visual_3d.write_html(
+                f"{savedir}/{fileid}{Outputs.VISUAL3D}")
 
         if config.seg_export and hip_datas and hip_datas.nifti is not None:
             hip_datas.nifti.save(f"{savedir}/{fileid}{Outputs.NIFTI}")
@@ -127,7 +130,7 @@ def run_single(
         if config.batch.debug == True:
             raise e
         e = traceback.format_exc()
-        ulogger.error(f"Error processing file {file_name}: {e}")
+        print(f"Error processing file {file_name}: {e}")
         return e
 
 
@@ -211,7 +214,6 @@ def run_batch(config: Config, filter_func=None):
     minutes, seconds = divmod(end - start, 60)
     print(f"Time taken: {minutes:.0f}m {seconds:.0f}s")
 
-    # Half to ignore the .nii files
     no_of_files = len(all_files)
 
     if no_of_files == 0:

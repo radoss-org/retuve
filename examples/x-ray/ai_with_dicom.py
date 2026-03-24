@@ -13,28 +13,26 @@
 # limitations under the License.
 
 import pydicom
+from retuve_yolo_plugin.xray import yolo_predict_dcm_xray
 
-from retuve.defaults.hip_configs import default_US
-from retuve.defaults.manual_seg import manual_predict_us_dcm
-from retuve.funcs import analyse_hip_2DUS_sweep
+from retuve.defaults.hip_configs import default_xray
+from retuve.funcs import analyse_hip_xray_2D
 from retuve.testdata import Cases, download_case
 
-# Example usage
 # dcm_file = "path/to/file"
-# seg_file = "/path/to/nifti"
-dcm_file, seg_file = download_case(Cases.ULTRASOUND_DICOM)
+dcm_file = download_case(Cases.XRAY_DICOM)[0]
 
+default_xray.device = "cpu"
 dcm = pydicom.dcmread(dcm_file)
-
-hip_datas, img, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
+hip_data, img, dev_metrics = analyse_hip_xray_2D(
     dcm,
-    keyphrase=default_US,
-    modes_func=manual_predict_us_dcm,
-    modes_func_kwargs_dict={"seg": seg_file},
+    keyphrase=default_xray,
+    modes_func=yolo_predict_dcm_xray,
+    modes_func_kwargs_dict={},
 )
 
-video_clip.write_videofile("2dus_sweep.mp4")
-img.save("2dus_sweep.png")
+img.save("xray.jpg")
 
-metrics = hip_datas.json_dump(default_US, dev_metrics)
+metrics = hip_data.json_dump(default_xray, dev_metrics)
 print(metrics)
+print(f"Landmarks: {hip_data.landmarks}")

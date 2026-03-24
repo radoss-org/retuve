@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import shutil
 import subprocess
 
 import pytest
@@ -55,10 +56,19 @@ for i, (script_path, module_dir) in enumerate(scripts):
                 env = os.environ.copy()
                 env["PYTHONPATH"] = module_dir
                 env["RETUVE_DISABLE_WARNING"] = "True"
+                env["COVERAGE_PROCESS_START"] = os.path.abspath(".coveragerc")
 
                 # Run the script
-                subprocess.run(["python", script_path], check=True, env=env)
+                subprocess.run(
+                    ["coverage", "run", "--parallel-mode", script_path],
+                    check=True,
+                    env=env,
+                )
 
+            except subprocess.CalledProcessError as e:
+                pytest.fail(f"Script failed: {script_path}\nError message: {e}")
+
+            finally:
                 # Capture the state of the directory after the script runs
                 final_files = set(os.listdir(temp_dir))
 
@@ -79,8 +89,12 @@ for i, (script_path, module_dir) in enumerate(scripts):
                     if os.path.isfile(file_path):
                         os.remove(file_path)
 
-            except subprocess.CalledProcessError as e:
-                pytest.fail(f"Script failed: {script_path}\nError message: {e}")
+                try:
+                    test_output_dir = f"{temp_dir}/.test-output"
+                    if os.path.isdir(test_output_dir):
+                        shutil.rmtree(test_output_dir)
+                except FileNotFoundError:
+                    pass
 
         return test
 

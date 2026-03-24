@@ -12,29 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pydicom
+from PIL import Image
+from retuve_yolo_plugin.ultrasound import yolo_predict_us
 
 from retuve.defaults.hip_configs import default_US
-from retuve.defaults.manual_seg import manual_predict_us_dcm
-from retuve.funcs import analyse_hip_2DUS_sweep
+from retuve.funcs import analyse_hip_2DUS
 from retuve.testdata import Cases, download_case
 
-# Example usage
-# dcm_file = "path/to/file"
-# seg_file = "/path/to/nifti"
-dcm_file, seg_file = download_case(Cases.ULTRASOUND_DICOM)
+# img_file = "path/to/file"
+img_file = download_case(Cases.ULTRASOUND_JPG)[0]
 
-dcm = pydicom.dcmread(dcm_file)
+img_raw = Image.open(img_file)
 
-hip_datas, img, dev_metrics, video_clip = analyse_hip_2DUS_sweep(
-    dcm,
+default_US.device = "cpu"
+hip_data, img, dev_metrics = analyse_hip_2DUS(
+    img_raw,
     keyphrase=default_US,
-    modes_func=manual_predict_us_dcm,
-    modes_func_kwargs_dict={"seg": seg_file},
+    modes_func=yolo_predict_us,
+    modes_func_kwargs_dict={},
 )
 
-video_clip.write_videofile("2dus_sweep.mp4")
-img.save("2dus_sweep.png")
+img_raw.save("2dus-raw.png")
+img.save("2dus.png")
 
-metrics = hip_datas.json_dump(default_US, dev_metrics)
+metrics = hip_data.json_dump(default_US, dev_metrics)
 print(metrics)
