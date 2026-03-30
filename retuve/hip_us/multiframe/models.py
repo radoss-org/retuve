@@ -123,7 +123,7 @@ def build_3d_visual(
             )
         )
 
-    if cr_points is not None:
+    if cr_points is not None and cr_points[0] is not None:
         fig.add_trace(
             go.Scatter3d(
                 x=[point[0] - com[0] for point in cr_points],
