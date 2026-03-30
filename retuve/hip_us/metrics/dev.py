@@ -19,6 +19,7 @@ A function for getting all the other metrics that are just for development purpo
 from typing import List
 
 import numpy as np
+
 from retuve.classes.seg import SegFrameObjects
 from retuve.hip_us.classes.dev import DevMetricsUS
 from retuve.hip_us.classes.enums import HipLabelsUS
@@ -81,7 +82,7 @@ def get_dev_metrics(
             round(point[2] / (config.hip.z_gap * (200 / len(hip_datas))), 0)
             for point in hip_datas.cr_points
         ]
-        if hip_datas.cr_points
+        if (hip_datas.cr_points and hip_datas.cr_points[2])
         else []
     )
 
