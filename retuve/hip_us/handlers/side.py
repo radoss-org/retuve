@@ -45,7 +45,9 @@ def get_side_metainfo(
     mid = (left[0] + apex[0]) / 2, (left[1] + apex[1]) / 2
 
     illium = [
-        seg_obj for seg_obj in results if seg_obj.cls == HipLabelsUS.IlliumAndAcetabulum
+        seg_obj
+        for seg_obj in results
+        if seg_obj.cls == HipLabelsUS.IlliumAndAcetabulum
     ]
 
     if len(illium) == 0:
@@ -72,7 +74,13 @@ def set_side_info(
     config,
 ) -> Tuple[HipDatasUS, List[SegFrameObjects]]:
     if config.hip.allow_flipping:
-        return reverse_3dus_orientaition(hip_datas, results, config.hip.allow_flipping)
+        return reverse_3dus_orientaition(
+            hip_datas, results, config.hip.allow_flipping
+        )
+
+    if hip_datas.graf_frame is None:
+        return hip_datas, results
+
     for hip_data in hip_datas:
         if hip_data.frame_no < hip_datas.graf_frame:
             hip_data.side = Side.ANT
