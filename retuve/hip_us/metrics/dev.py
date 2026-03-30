@@ -73,9 +73,7 @@ def get_dev_metrics(
         ].frame_no
 
     if len(fem_marked_hips) > 0:
-        dev_metrics.fem_mid_frame = fem_marked_hips[
-            len(fem_marked_hips) // 2
-        ].frame_no
+        dev_metrics.fem_mid_frame = fem_marked_hips[len(fem_marked_hips) // 2].frame_no
 
     dev_metrics.critial_error = hip_datas.recorded_error.critical
 
