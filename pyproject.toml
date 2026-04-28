@@ -9,30 +9,30 @@ readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "radstract>=1.0.2",
-    "fire>=0.7.0",
+    "fire>=0.7.1",
     "moviepy>=2.2.1",
     "open3d>=0.19.0",
     "addict>=2.4.0",
     "afterthought>=0.5.0",
     "jinja2>=3.1.6",
-    "aiohttp>=3.12.14",
-    "deptry>=0.23.0",
-    "scikit-learn>=1.7.1",
-    "pyyaml>=6.0.2",
-    "filelock>=3.18.0",
-    "fastapi>=0.116.1",
+    "aiohttp>=3.13.5",
+    "deptry>=0.25.1",
+    "scikit-learn>=1.7.2",
+    "pyyaml>=6.0.3",
+    "filelock>=3.29.0",
+    "fastapi>=0.136.1",
     "httpx>=0.28.1",
-    "python-multipart>=0.0.20",
-    "uvicorn>=0.35.0",
+    "python-multipart>=0.0.27",
+    "uvicorn>=0.46.0",
     "h11>=0.16.0",
-    "setuptools>=80.9.0",
-    "starlette>=0.47.2",
-    "urllib3>=2.5.0",
-    "requests>=2.32.4",
-    "plotly>=6.3.0",
-    "kaleido>=1.0.0",
-    "attrs>=25.0.1",
-    "pip>=26.0.1",
+    "setuptools>=82.0.1",
+    "starlette>=1.0.0",
+    "urllib3>=2.6.3",
+    "requests>=2.33.1",
+    "plotly>=6.7.0",
+    "kaleido>=1.2.0",
+    "attrs>=26.1.0",
+    "pip>=26.1",
 ]
 
 [build-system]
@@ -48,13 +48,13 @@ sigterm = true
 
 [dependency-groups]
 dev = [
-    "black>=23.0.0",
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "pytest-xdist>=3.0.0",
-    "poethepoet>=0.20.0",
-    "vulture>=2.0.0",
-    "pdoc>=14.0.0",
+    "black>=26.3.1",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
+    "poethepoet>=0.44.0",
+    "vulture>=2.16",
+    "pdoc>=16.0.0",
 ]
 
 [tool.poe.tasks]
